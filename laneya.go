@@ -37,8 +37,8 @@ type Client struct {
 }
 
 type Message struct {
-	client *Client
-	data   []byte
+	client *Client `json:-`
+	Action string  `json:"action"`
 }
 
 type Game struct {
@@ -74,24 +74,25 @@ func (game *Game) run() {
 		select {
 		case msg := <-game.msg:
 			// TODO
-			log.Println(msg.data)
-			msg.client.send <- msg.data
+			log.Println(msg.Action, msg.client)
+			msg.client.send <- []byte(msg.Action)
 		}
 	}
 }
 
 func (client *Client) readPump() {
 	defer func() {
-		client.game.msg <- Message{client: client, data: []byte("unregister")}
+		client.game.msg <- Message{client: client, Action: "unregister"}
 		client.conn.Close()
 	}()
 
 	for {
-		_, data, err := client.conn.ReadMessage()
+		msg := Message{client: client}
+		err := client.conn.ReadJSON(&msg)
 		if err != nil {
 			return
 		}
-		client.game.msg <- Message{client: client, data: data}
+		client.game.msg <- msg
 	}
 }
 
@@ -157,7 +158,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		client.alive = true
 		return nil
 	})
-	game.msg <- Message{client: client, data: []byte("register")}
+	game.msg <- Message{client: client, Action: "register"}
 
 	go client.writePump()
 	go client.readPump()
