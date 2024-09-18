@@ -27,37 +27,29 @@ var js []byte
 var upgrader = websocket.Upgrader{}
 var verbose = false
 
+func serveHome(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	w.Write(html)
+}
+
+func serveCSS(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/css")
+	w.WriteHeader(http.StatusOK)
+	w.Write(css)
+}
+
+func serveJS(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/javascript")
+	w.WriteHeader(http.StatusOK)
+	w.Write(js)
+}
+
 func serveWs(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
 		return
-	}
-func handler(w http.ResponseWriter, r *http.Request) {
-	if verbose {
-		log.Println(r.Method, r.URL)
-	}
-
-	if r.Method != http.MethodGet {
-		http.Error(w, "Unsupported Method", http.StatusMethodNotAllowed)
-	}
-
-	if r.URL.Path == "/" {
-		w.Header().Set("Content-Type", "text/html")
-		w.WriteHeader(http.StatusOK)
-		w.Write(html)
-	} else if r.URL.Path == "/style.css" {
-		w.Header().Set("Content-Type", "text/css")
-		w.WriteHeader(http.StatusOK)
-		w.Write(css)
-	} else if r.URL.Path == "/main.js" {
-		w.Header().Set("Content-Type", "text/javascript")
-		w.WriteHeader(http.StatusOK)
-		w.Write(js)
-	} else if r.URL.Path == "/ws/" {
-		serveWs(w, r)
-	} else {
-		http.Error(w, "Not Found", http.StatusNotFound)
 	}
 }
 
@@ -75,7 +67,10 @@ func main() {
 		addr = fmt.Sprintf("localhost:%s", flag.Args()[0])
 	}
 
-	http.HandleFunc("/", handler)
+	http.HandleFunc("GET /{$}", serveHome)
+	http.HandleFunc("GET /style.css", serveCSS)
+	http.HandleFunc("GET /main.js", serveJS)
+	http.HandleFunc("GET /ws", serveWs)
 
 	ctx, unregisterSignals := signal.NotifyContext(
 		context.Background(), os.Interrupt, syscall.SIGTERM,
