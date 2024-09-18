@@ -77,6 +77,35 @@ func (game *Game) run() {
 	}
 }
 
+func (client *Client) readPump() {
+	defer func() {
+		client.game.msg <- Message{client: client, data: []byte("unregister")}
+		client.conn.Close()
+	}()
+
+	for {
+		_, data, err := client.conn.ReadMessage()
+		if err != nil {
+			return
+		}
+		client.game.msg <- Message{client: client, data: data}
+	}
+}
+
+func (client *Client) writePump() {
+	defer client.conn.Close()
+
+	for {
+		select {
+		case data := <-client.send:
+			err := client.conn.WriteMessage(websocket.TextMessage, data)
+			if err != nil {
+				return
+			}
+		}
+	}
+}
+
 func serveHome(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
@@ -110,6 +139,9 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		send: make(chan []byte, 256),
 	}
 	game.msg <- Message{client: client, data: []byte("register")}
+
+	go client.writePump()
+	go client.readPump()
 }
 
 func main() {
