@@ -12,6 +12,7 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -29,9 +30,10 @@ var upgrader = websocket.Upgrader{}
 var verbose = false
 
 type Client struct {
-	game *Game
-	conn *websocket.Conn
-	send chan []byte
+	game  *Game
+	conn  *websocket.Conn
+	send  chan []byte
+	alive bool
 }
 
 type Message struct {
@@ -73,6 +75,7 @@ func (game *Game) run() {
 		case msg := <-game.msg:
 			// TODO
 			log.Println(msg.data)
+			msg.client.send <- msg.data
 		}
 	}
 }
@@ -94,11 +97,22 @@ func (client *Client) readPump() {
 
 func (client *Client) writePump() {
 	defer client.conn.Close()
+	ticker := time.NewTicker(60 * time.Second)
+	defer ticker.Stop()
 
 	for {
 		select {
 		case data := <-client.send:
 			err := client.conn.WriteMessage(websocket.TextMessage, data)
+			if err != nil {
+				return
+			}
+		case <-ticker.C:
+			if client.alive {
+				return
+			}
+			client.alive = false
+			err := client.conn.WriteMessage(websocket.PingMessage, nil)
 			if err != nil {
 				return
 			}
@@ -134,10 +148,15 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	game := getGame(r.PathValue("id"))
 
 	client := &Client{
-		game: game,
-		conn: conn,
-		send: make(chan []byte, 256),
+		game:  game,
+		conn:  conn,
+		send:  make(chan []byte, 256),
+		alive: true,
 	}
+	conn.SetPongHandler(func(string) error {
+		client.alive = true
+		return nil
+	})
 	game.msg <- Message{client: client, data: []byte("register")}
 
 	go client.writePump()
