@@ -42,6 +42,7 @@ type Message struct {
 }
 
 type Game struct {
+	id      string
 	clients map[*Client]bool
 	msg     chan Message
 }
@@ -56,6 +57,7 @@ func getGame(id string) *Game {
 
 	if !ok {
 		game = &Game{
+			id:      id,
 			msg:     make(chan Message),
 			clients: make(map[*Client]bool),
 		}
@@ -73,9 +75,20 @@ func (game *Game) run() {
 	for {
 		select {
 		case msg := <-game.msg:
-			// TODO
 			log.Println(msg.Action, msg.client)
-			msg.client.send <- []byte(msg.Action)
+			if msg.Action == "register" {
+				game.clients[msg.client] = true
+			} else if msg.Action == "unregister" {
+				delete(game.clients, msg.client)
+				if len(game.clients) == 0 {
+					mux.Lock()
+					delete(games, game.id)
+					mux.Unlock()
+				}
+			} else {
+				// TODO
+				msg.client.send <- []byte(msg.Action)
+			}
 		}
 	}
 }
