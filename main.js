@@ -1,4 +1,4 @@
-var conn = new WebSocket(`ws://localhost:8080/`);
+var conn = new WebSocket(`ws://${location.host}/ws/`);
 
 conn.onclose = function() {
     alert('Connection lost');
