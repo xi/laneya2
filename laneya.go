@@ -70,7 +70,7 @@ func main() {
 	flag.BoolVar(&verbose, "v", false, "enable verbose logs")
 	flag.Parse()
 
-	addr := "localhost:8001"
+	addr := "localhost:8000"
 	if len(flag.Args()) > 0 {
 		addr = fmt.Sprintf("localhost:%s", flag.Args()[0])
 	}
