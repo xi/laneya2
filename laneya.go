@@ -51,6 +51,8 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
+
+	log.Println(r.PathValue("id"))
 }
 
 func main() {
@@ -70,7 +72,7 @@ func main() {
 	http.HandleFunc("GET /{$}", serveHome)
 	http.HandleFunc("GET /style.css", serveCSS)
 	http.HandleFunc("GET /main.js", serveJS)
-	http.HandleFunc("GET /ws", serveWs)
+	http.HandleFunc("GET /ws/{id}", serveWs)
 
 	ctx, unregisterSignals := signal.NotifyContext(
 		context.Background(), os.Interrupt, syscall.SIGTERM,
