@@ -9,5 +9,5 @@ conn.onclose = function() {
 
 conn.onmessage = function(event) {
     // TODO
-    console.log(event.data);
+    console.log(JSON.parse(event.data));
 };

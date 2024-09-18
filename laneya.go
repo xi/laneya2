@@ -29,22 +29,26 @@ var js []byte
 var upgrader = websocket.Upgrader{}
 var verbose = false
 
+type Message struct {
+	Action string `json:"action"`
+}
+
 type Client struct {
 	Game  *Game
-	Send  chan []byte
+	Send  chan Message
 	conn  *websocket.Conn
 	alive bool
 }
 
-type Message struct {
-	Client *Client `json:-`
-	Action string  `json:"action"`
+type ClientMessage struct {
+	Client *Client
+	Msg    Message
 }
 
 type Game struct {
 	Id      string
 	Clients map[*Client]bool
-	Msg     chan Message
+	Msg     chan ClientMessage
 }
 
 var mux = &sync.RWMutex{}
@@ -58,7 +62,7 @@ func getGame(id string) *Game {
 	if !ok {
 		game = &Game{
 			Id:      id,
-			Msg:     make(chan Message),
+			Msg:     make(chan ClientMessage),
 			Clients: make(map[*Client]bool),
 		}
 		mux.Lock()
@@ -74,12 +78,14 @@ func getGame(id string) *Game {
 func (game *Game) run() {
 	for {
 		select {
-		case msg := <-game.Msg:
-			log.Println(msg.Action, msg.Client)
+		case cmsg := <-game.Msg:
+			client := cmsg.Client
+			msg := cmsg.Msg
+			log.Println(msg.Action, client)
 			if msg.Action == "register" {
-				game.Clients[msg.Client] = true
+				game.Clients[client] = true
 			} else if msg.Action == "unregister" {
-				delete(game.Clients, msg.Client)
+				delete(game.Clients, client)
 				if len(game.Clients) == 0 {
 					mux.Lock()
 					delete(games, game.Id)
@@ -87,7 +93,7 @@ func (game *Game) run() {
 				}
 			} else {
 				// TODO
-				msg.Client.Send <- []byte(msg.Action)
+				client.Send <- msg
 			}
 		}
 	}
@@ -95,17 +101,17 @@ func (game *Game) run() {
 
 func (client *Client) readPump() {
 	defer func() {
-		client.Game.Msg <- Message{Client: client, Action: "unregister"}
+		client.Game.Msg <- ClientMessage{client, Message{Action: "unregister"}}
 		client.conn.Close()
 	}()
 
 	for {
-		msg := Message{Client: client}
+		msg := Message{}
 		err := client.conn.ReadJSON(&msg)
 		if err != nil {
 			return
 		}
-		client.Game.Msg <- msg
+		client.Game.Msg <- ClientMessage{client, msg}
 	}
 }
 
@@ -117,7 +123,7 @@ func (client *Client) writePump() {
 	for {
 		select {
 		case data := <-client.Send:
-			err := client.conn.WriteMessage(websocket.TextMessage, data)
+			err := client.conn.WriteJSON(data)
 			if err != nil {
 				return
 			}
@@ -163,7 +169,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 
 	client := &Client{
 		Game:  game,
-		Send:  make(chan []byte, 256),
+		Send:  make(chan Message),
 		conn:  conn,
 		alive: true,
 	}
@@ -171,7 +177,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		client.alive = true
 		return nil
 	})
-	game.Msg <- Message{Client: client, Action: "register"}
+	game.Msg <- ClientMessage{client, Message{Action: "register"}}
 
 	go client.writePump()
 	go client.readPump()
