@@ -10,12 +10,19 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/gorilla/websocket"
 )
 
+var upgrader = websocket.Upgrader{}
 var verbose = false
 
 func serveWs(w http.ResponseWriter, r *http.Request) {
-	// TODO
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 }
 
 func main() {
