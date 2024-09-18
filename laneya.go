@@ -46,9 +46,11 @@ type ClientMessage struct {
 }
 
 type Game struct {
-	Id      string
-	Clients map[*Client]bool
-	Msg     chan ClientMessage
+	Id         string
+	Clients    map[*Client]bool
+	Msg        chan ClientMessage
+	register   chan *Client
+	unregister chan *Client
 }
 
 var mux = &sync.RWMutex{}
@@ -61,9 +63,11 @@ func getGame(id string) *Game {
 
 	if !ok {
 		game = &Game{
-			Id:      id,
-			Msg:     make(chan ClientMessage),
-			Clients: make(map[*Client]bool),
+			Id:         id,
+			Clients:    make(map[*Client]bool),
+			Msg:        make(chan ClientMessage),
+			register:   make(chan *Client),
+			unregister: make(chan *Client),
 		}
 		mux.Lock()
 		games[id] = game
@@ -78,30 +82,28 @@ func getGame(id string) *Game {
 func (game *Game) run() {
 	for {
 		select {
+		case client := <-game.register:
+			game.Clients[client] = true
+		case client := <-game.unregister:
+			delete(game.Clients, client)
+			if len(game.Clients) == 0 {
+				mux.Lock()
+				delete(games, game.Id)
+				mux.Unlock()
+			}
 		case cmsg := <-game.Msg:
 			client := cmsg.Client
 			msg := cmsg.Msg
 			log.Println(msg.Action, client)
-			if msg.Action == "register" {
-				game.Clients[client] = true
-			} else if msg.Action == "unregister" {
-				delete(game.Clients, client)
-				if len(game.Clients) == 0 {
-					mux.Lock()
-					delete(games, game.Id)
-					mux.Unlock()
-				}
-			} else {
-				// TODO
-				client.Send <- []Message{msg}
-			}
+			// TODO
+			client.Send <- []Message{msg}
 		}
 	}
 }
 
 func (client *Client) readPump() {
 	defer func() {
-		client.Game.Msg <- ClientMessage{client, Message{Action: "unregister"}}
+		client.Game.unregister <- client
 		client.conn.Close()
 	}()
 
@@ -177,7 +179,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		client.alive = true
 		return nil
 	})
-	game.Msg <- ClientMessage{client, Message{Action: "register"}}
+	game.register <- client
 
 	go client.writePump()
 	go client.readPump()
