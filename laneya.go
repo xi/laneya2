@@ -35,7 +35,7 @@ type Message struct {
 
 type Client struct {
 	Game  *Game
-	Send  chan Message
+	Send  chan []Message
 	conn  *websocket.Conn
 	alive bool
 }
@@ -93,7 +93,7 @@ func (game *Game) run() {
 				}
 			} else {
 				// TODO
-				client.Send <- msg
+				client.Send <- []Message{msg}
 			}
 		}
 	}
@@ -169,7 +169,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 
 	client := &Client{
 		Game:  game,
-		Send:  make(chan Message),
+		Send:  make(chan []Message),
 		conn:  conn,
 		alive: true,
 	}
