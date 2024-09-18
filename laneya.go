@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"flag"
 	"fmt"
 	"log"
@@ -14,6 +15,15 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+//go:embed index.html
+var html []byte
+
+//go:embed style.css
+var css []byte
+
+//go:embed main.js
+var js []byte
+
 var upgrader = websocket.Upgrader{}
 var verbose = false
 
@@ -22,6 +32,32 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println(err)
 		return
+	}
+func handler(w http.ResponseWriter, r *http.Request) {
+	if verbose {
+		log.Println(r.Method, r.URL)
+	}
+
+	if r.Method != http.MethodGet {
+		http.Error(w, "Unsupported Method", http.StatusMethodNotAllowed)
+	}
+
+	if r.URL.Path == "/" {
+		w.Header().Set("Content-Type", "text/html")
+		w.WriteHeader(http.StatusOK)
+		w.Write(html)
+	} else if r.URL.Path == "/style.css" {
+		w.Header().Set("Content-Type", "text/css")
+		w.WriteHeader(http.StatusOK)
+		w.Write(css)
+	} else if r.URL.Path == "/main.js" {
+		w.Header().Set("Content-Type", "text/javascript")
+		w.WriteHeader(http.StatusOK)
+		w.Write(js)
+	} else if r.URL.Path == "/ws/" {
+		serveWs(w, r)
+	} else {
+		http.Error(w, "Not Found", http.StatusNotFound)
 	}
 }
 
@@ -39,7 +75,7 @@ func main() {
 		addr = fmt.Sprintf("localhost:%s", flag.Args()[0])
 	}
 
-	http.HandleFunc("/", serveWs)
+	http.HandleFunc("/", handler)
 
 	ctx, unregisterSignals := signal.NotifyContext(
 		context.Background(), os.Interrupt, syscall.SIGTERM,
