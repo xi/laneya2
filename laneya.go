@@ -27,6 +27,55 @@ var js []byte
 var upgrader = websocket.Upgrader{}
 var verbose = false
 
+type Client struct {
+	game *Game
+	conn *websocket.Conn
+	send chan []byte
+}
+
+type Message struct {
+	client *Client
+	data   []byte
+}
+
+type Game struct {
+	clients map[*Client]bool
+	msg     chan Message
+}
+
+var mux = &sync.RWMutex{}
+var games = make(map[string]*Game)
+
+func getGame(id string) *Game {
+	mux.RLock()
+	game, ok := games[id]
+	mux.RUnlock()
+
+	if !ok {
+		game := &Game{
+			msg:     make(chan Message),
+			clients: make(map[*Client]bool),
+		}
+		mux.Lock()
+		games[id] = game
+		mux.Unlock()
+
+		go game.run()
+	}
+
+	return game
+}
+
+func (game *Game) run() {
+	for {
+		select {
+		case msg := <-game.msg:
+			// TODO
+			log.Println(msg.data)
+		}
+	}
+}
+
 func serveHome(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
@@ -52,7 +101,14 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println(r.PathValue("id"))
+	game := getGame(r.PathValue("id"))
+
+	client := &Client{
+		game: game,
+		conn: conn,
+		send: make(chan []byte, 256),
+	}
+	game.msg <- Message{client: client, data: []byte("register")}
 }
 
 func main() {
