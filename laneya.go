@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"github.com/gorilla/websocket"
@@ -52,7 +53,7 @@ func getGame(id string) *Game {
 	mux.RUnlock()
 
 	if !ok {
-		game := &Game{
+		game = &Game{
 			msg:     make(chan Message),
 			clients: make(map[*Client]bool),
 		}
