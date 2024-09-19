@@ -29,9 +29,25 @@ var js []byte
 var upgrader = websocket.Upgrader{}
 var verbose = false
 
-type Message struct {
-	Action string `json:"action"`
+type Point struct {
+	X int `json:"x"`
+	Y int `json:"y"`
 }
+
+type Rect struct {
+	X1 int `json:"x1"`
+	Y1 int `json:"y1"`
+	X2 int `json:"x2"`
+	Y2 int `json:"y2"`
+}
+
+type Line struct {
+	X   int `json:"x"`
+	Y   int `json:"y"`
+	Len int `json:"len"`
+}
+
+type Message map[string]interface{}
 
 type Player struct {
 	Game  *Game
@@ -39,6 +55,7 @@ type Player struct {
 	conn  *websocket.Conn
 	alive bool
 	Id    int
+	Pos   Point
 }
 
 type PlayerMessage struct {
@@ -52,6 +69,10 @@ type Game struct {
 	Msg        chan PlayerMessage
 	register   chan *Player
 	unregister chan *Player
+	lastId     int
+	Rects      []Rect
+	Horizontal []Line
+	Vertical   []Line
 }
 
 var mux = &sync.RWMutex{}
@@ -70,6 +91,9 @@ func getGame(id string) *Game {
 			register:   make(chan *Player),
 			unregister: make(chan *Player),
 			lastId:     0,
+			Rects:      []Rect{Rect{-10, -10, 10, 10}},
+			Horizontal: []Line{},
+			Vertical:   []Line{},
 		}
 		mux.Lock()
 		games[id] = game
@@ -79,6 +103,12 @@ func getGame(id string) *Game {
 	}
 
 	return game
+}
+
+func (game *Game) broadcast(msgs []Message) {
+	for player, _ := range game.Players {
+		player.Send <- msgs
+	}
 }
 
 func (game *Game) createId() int {
@@ -91,17 +121,44 @@ func (game *Game) run() {
 		select {
 		case player := <-game.register:
 			game.Players[player] = true
+
+			player.Send <- []Message{
+				Message{
+					"action": "setId",
+					"id": player.Id,
+				},
+				Message{
+					"action": "setLevel",
+					"rects": game.Rects,
+					"horizontal": game.Horizontal,
+					"vertical": game.Vertical,
+				},
+			}
+			game.broadcast([]Message{
+				Message{
+					"action": "create",
+					"type": "player",
+					"id": player.Id,
+					"pos": player.Pos,
+				},
+			})
 		case player := <-game.unregister:
 			delete(game.Players, player)
 			if len(game.Players) == 0 {
 				mux.Lock()
 				delete(games, game.Id)
 				mux.Unlock()
+			} else {
+				game.broadcast([]Message{
+					Message{
+						"action": "remove",
+						"id": player.Id,
+					},
+				})
 			}
 		case cmsg := <-game.Msg:
 			player := cmsg.Player
 			msg := cmsg.Msg
-			log.Println(msg.Action, player)
 			// TODO
 			player.Send <- []Message{msg}
 		}
@@ -182,6 +239,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		conn:  conn,
 		alive: true,
 		Id:    game.createId(),
+		Pos:   Point{0, 0},
 	}
 	conn.SetPongHandler(func(string) error {
 		player.alive = true
