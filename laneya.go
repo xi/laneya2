@@ -38,6 +38,7 @@ type Player struct {
 	Send  chan []Message
 	conn  *websocket.Conn
 	alive bool
+	Id    int
 }
 
 type PlayerMessage struct {
@@ -68,6 +69,7 @@ func getGame(id string) *Game {
 			Msg:        make(chan PlayerMessage),
 			register:   make(chan *Player),
 			unregister: make(chan *Player),
+			lastId:     0,
 		}
 		mux.Lock()
 		games[id] = game
@@ -77,6 +79,11 @@ func getGame(id string) *Game {
 	}
 
 	return game
+}
+
+func (game *Game) createId() int {
+	game.lastId += 1
+	return game.lastId
 }
 
 func (game *Game) run() {
@@ -174,6 +181,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		Send:  make(chan []Message),
 		conn:  conn,
 		alive: true,
+		Id:    game.createId(),
 	}
 	conn.SetPongHandler(func(string) error {
 		player.alive = true
