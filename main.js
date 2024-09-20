@@ -5,6 +5,10 @@ var gameId = params.get('game');
 
 var conn = new WebSocket(`ws://${location.host}/ws/${gameId}`);
 
+var send = function(data) {
+    conn.send(JSON.stringify(data));
+};
+
 var game = {
     id: -1,
     rects: [],
@@ -97,7 +101,24 @@ conn.onmessage = function(event) {
                 type: msg.type,
                 pos: msg.pos,
             };
+        } else if (msg.action === 'setPosition') {
+            game.objects[msg.id].pos = msg.pos;
         }
     }
     render();
+};
+
+document.onkeydown = function(event) {
+    if (event.key === 'ArrowUp') {
+        send({action: 'move', dir: 'up'});
+    } else if (event.key === 'ArrowRight') {
+        send({action: 'move', dir: 'right'});
+    } else if (event.key === 'ArrowDown') {
+        send({action: 'move', dir: 'down'});
+    } else if (event.key === 'ArrowLeft') {
+        send({action: 'move', dir: 'left'});
+    } else {
+        return;
+    }
+    event.preventDefault();
 };

@@ -157,8 +157,28 @@ func (game *Game) run() {
 		case cmsg := <-game.Msg:
 			player := cmsg.Player
 			msg := cmsg.Msg
-			// TODO
-			player.Send <- []Message{msg}
+
+			if msg["action"] == "move" {
+				// TODO: check boundaries
+				if msg["dir"] == "up" {
+					player.Pos.Y -= 1
+				} else if msg["dir"] == "right" {
+					player.Pos.X += 1
+				} else if msg["dir"] == "down" {
+					player.Pos.Y += 1
+				} else if msg["dir"] == "left" {
+					player.Pos.X -= 1
+				}
+				game.broadcast([]Message{
+					Message{
+						"action": "setPosition",
+						"id":     player.Id,
+						"pos":    player.Pos,
+					},
+				})
+			} else {
+				log.Println(msg)
+			}
 		}
 	}
 }
