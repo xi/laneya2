@@ -3,10 +3,10 @@ var $pre = document.querySelector('pre');
 var params = new URLSearchParams(location.search);
 var gameId = params.get('game');
 
-var conn = new WebSocket(`ws://${location.host}/ws/${gameId}`);
+var socket = new WebSocket(`ws://${location.host}/ws/${gameId}`);
 
 var send = function(data) {
-    conn.send(JSON.stringify(data));
+    socket.send(JSON.stringify(data));
 };
 
 var game = {
@@ -82,11 +82,11 @@ var render = function() {
     }
 };
 
-conn.onclose = function() {
+socket.onclose = function() {
     alert('Connection lost');
 };
 
-conn.onmessage = function(event) {
+socket.onmessage = function(event) {
     var messages = JSON.parse(event.data);
     for (const msg of messages) {
         console.log(msg);
