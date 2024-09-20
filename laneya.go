@@ -41,12 +41,6 @@ type Rect struct {
 	Y2 int `json:"y2"`
 }
 
-type Line struct {
-	X   int `json:"x"`
-	Y   int `json:"y"`
-	Len int `json:"len"`
-}
-
 type Message map[string]interface{}
 
 type Player struct {
