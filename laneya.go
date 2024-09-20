@@ -125,19 +125,19 @@ func (game *Game) run() {
 			player.Send <- []Message{
 				Message{
 					"action": "setId",
-					"id": player.Id,
+					"id":     player.Id,
 				},
 				Message{
 					"action": "setLevel",
-					"rects": game.Rects,
+					"rects":  game.Rects,
 				},
 			}
 			game.broadcast([]Message{
 				Message{
 					"action": "create",
-					"type": "player",
-					"id": player.Id,
-					"pos": player.Pos,
+					"type":   "player",
+					"id":     player.Id,
+					"pos":    player.Pos,
 				},
 			})
 		case player := <-game.unregister:
@@ -150,7 +150,7 @@ func (game *Game) run() {
 				game.broadcast([]Message{
 					Message{
 						"action": "remove",
-						"id": player.Id,
+						"id":     player.Id,
 					},
 				})
 			}
