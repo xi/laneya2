@@ -1,3 +1,8 @@
+.PHONY: live
+live:
+	printf 'laneya.go\nindex.html\nstyle.css\nmain.js\n' | entr -r make lint run
+
+.PHONY: run
 run: laneya
 	./laneya -v
 
