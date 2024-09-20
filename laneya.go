@@ -71,8 +71,6 @@ type Game struct {
 	unregister chan *Player
 	lastId     int
 	Rects      []Rect
-	Horizontal []Line
-	Vertical   []Line
 }
 
 var mux = &sync.RWMutex{}
@@ -91,9 +89,11 @@ func getGame(id string) *Game {
 			register:   make(chan *Player),
 			unregister: make(chan *Player),
 			lastId:     0,
-			Rects:      []Rect{Rect{-10, -10, 10, 10}},
-			Horizontal: []Line{},
-			Vertical:   []Line{},
+			Rects: []Rect{
+				Rect{-10, -10, 10, 10},
+				Rect{-19, 0, -9, 0},
+				Rect{-19, 0, -19, 10},
+			},
 		}
 		mux.Lock()
 		games[id] = game
@@ -130,8 +130,6 @@ func (game *Game) run() {
 				Message{
 					"action": "setLevel",
 					"rects": game.Rects,
-					"horizontal": game.Horizontal,
-					"vertical": game.Vertical,
 				},
 			}
 			game.broadcast([]Message{
