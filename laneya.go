@@ -212,7 +212,7 @@ func (player *Player) writePump() {
 				return
 			}
 		case <-ticker.C:
-			if player.alive {
+			if !player.alive {
 				return
 			}
 			player.alive = false
