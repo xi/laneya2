@@ -66,6 +66,7 @@ type Game struct {
 	unregister chan *Player
 	lastId     int
 	Rects      []Rect
+	Ladder     Point
 }
 
 var mux = &sync.RWMutex{}
@@ -110,6 +111,7 @@ func (game *Game) generateMap() {
 		}
 	}
 
+	game.Ladder = prev.Center()
 
 	for _, line := range lines {
 		game.Rects = append(game.Rects, line)
@@ -176,6 +178,34 @@ func (game *Game) IsFree(x int, y int) bool {
 	return false
 }
 
+func (game *Game) MaybeNextLevel() {
+	for player := range game.Players {
+		if player.Pos != game.Ladder {
+			return
+		}
+	}
+
+	game.generateMap()
+	msgs := []Message{
+		Message{
+			"action": "setLevel",
+			"rects":  game.Rects,
+			"ladder": game.Ladder,
+		},
+	}
+
+	for player := range game.Players {
+		player.Pos = Point{0, 0}
+		msgs = append(msgs, Message{
+			"action": "setPosition",
+			"id":     player.Id,
+			"pos":    player.Pos,
+		})
+	}
+
+	game.broadcast(msgs)
+}
+
 func (game *Game) run() {
 	for {
 		select {
@@ -188,6 +218,7 @@ func (game *Game) run() {
 				Message{
 					"action": "setLevel",
 					"rects":  game.Rects,
+					"ladder": game.Ladder,
 				},
 			}
 			for p := range game.Players {
@@ -248,6 +279,8 @@ func (game *Game) run() {
 							"pos":    player.Pos,
 						},
 					})
+
+					game.MaybeNextLevel()
 				}
 			} else {
 				log.Println(msg)

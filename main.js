@@ -15,6 +15,9 @@ var game = {
     objects: {},
 
     getChar(x, y) {
+        if (x === this.ladder.x && y === this.ladder.y) {
+            return ['>', -1];
+        }
         if (Object.values(this.objects).some(obj => x === obj.pos.x && y === obj.pos.y)) {
             return ['@', 1];
         }
@@ -94,6 +97,7 @@ socket.onmessage = function(event) {
             game.id = msg.id;
         } else if (msg.action === 'setLevel') {
             game.rects = msg.rects;
+            game.ladder = msg.ladder;
             game.horizontal = msg.horizontal;
             game.vertical = msg.vertical;
         } else if (msg.action === 'create') {
