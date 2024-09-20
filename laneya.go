@@ -99,6 +99,10 @@ func getGame(id string) *Game {
 	return game
 }
 
+func (rect *Rect) Contains(x int, y int) bool {
+	return x >= rect.X1 && x <= rect.X2 && y >= rect.Y1 && y <= rect.Y2
+}
+
 func (game *Game) broadcast(msgs []Message) {
 	for player, _ := range game.Players {
 		player.Send <- msgs
@@ -110,13 +114,20 @@ func (game *Game) createId() int {
 	return game.lastId
 }
 
+func (game *Game) IsFree(x int, y int) bool {
+	for _, rect := range game.Rects {
+		if rect.Contains(x, y) {
+			return true
+		}
+	}
+	return false
+}
+
 func (game *Game) run() {
 	for {
 		select {
 		case player := <-game.register:
-			game.Players[player] = true
-
-			player.Send <- []Message{
+			setup := []Message{
 				Message{
 					"action": "setId",
 					"id":     player.Id,
@@ -126,6 +137,18 @@ func (game *Game) run() {
 					"rects":  game.Rects,
 				},
 			}
+			for p := range game.Players {
+				setup = append(setup, Message{
+					"action": "create",
+					"type":   "player",
+					"id":     p.Id,
+					"pos":    p.Pos,
+				})
+			}
+			player.Send <- setup
+
+			game.Players[player] = true
+
 			game.broadcast([]Message{
 				Message{
 					"action": "create",
@@ -153,23 +176,26 @@ func (game *Game) run() {
 			msg := cmsg.Msg
 
 			if msg["action"] == "move" {
-				// TODO: check boundaries
+				pos := player.Pos
 				if msg["dir"] == "up" {
-					player.Pos.Y -= 1
+					pos.Y -= 1
 				} else if msg["dir"] == "right" {
-					player.Pos.X += 1
+					pos.X += 1
 				} else if msg["dir"] == "down" {
-					player.Pos.Y += 1
+					pos.Y += 1
 				} else if msg["dir"] == "left" {
-					player.Pos.X -= 1
+					pos.X -= 1
 				}
-				game.broadcast([]Message{
-					Message{
-						"action": "setPosition",
-						"id":     player.Id,
-						"pos":    player.Pos,
-					},
-				})
+				if game.IsFree(pos.X, pos.Y) {
+					player.Pos = pos
+					game.broadcast([]Message{
+						Message{
+							"action": "setPosition",
+							"id":     player.Id,
+							"pos":    player.Pos,
+						},
+					})
+				}
 			} else {
 				log.Println(msg)
 			}
