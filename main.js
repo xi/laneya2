@@ -103,6 +103,8 @@ socket.onmessage = function(event) {
             };
         } else if (msg.action === 'setPosition') {
             game.objects[msg.id].pos = msg.pos;
+        } else if (msg.action === 'remove') {
+            delete game.objects[msg.id];
         }
     }
     render();
