@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"net"
 	"net/http"
 	"os"
@@ -70,6 +71,51 @@ type Game struct {
 var mux = &sync.RWMutex{}
 var games = make(map[string]*Game)
 
+func makeRect(x1 int, y1 int, x2 int, y2 int) Rect {
+	if x1 > x2 {
+		x1, x2 = x2, x1
+	}
+	if y1 > y2 {
+		y1, y2 = y2, y1
+	}
+	return Rect{x1, y1, x2, y2}
+}
+
+func randomRect(n int) Rect {
+	x1 := rand.Intn(2*n) - n
+	x2 := rand.Intn(2*n) - n
+	y1 := rand.Intn(2*n) - n
+	y2 := rand.Intn(2*n) - n
+	return makeRect(x1, y1, x2, y2)
+}
+
+func (game *Game) generateMap() {
+	prev := Rect{-5, -5, 5, 5}
+
+	game.Rects = []Rect{prev}
+	lines := []Rect{}
+
+	for i := 1; i <= 12; i++ {
+		rect := randomRect(50)
+		if rect.Area() < 250 {
+			game.Rects = append(game.Rects, rect)
+
+			p1 := prev.Center()
+			p2 := rect.Center()
+
+			lines = append(lines, makeRect(p1.X, p1.Y, p2.X, p1.Y))
+			lines = append(lines, makeRect(p2.X, p1.Y, p2.X, p2.Y))
+
+			prev = rect
+		}
+	}
+
+
+	for _, line := range lines {
+		game.Rects = append(game.Rects, line)
+	}
+}
+
 func getGame(id string) *Game {
 	mux.RLock()
 	game, ok := games[id]
@@ -83,12 +129,8 @@ func getGame(id string) *Game {
 			register:   make(chan *Player),
 			unregister: make(chan *Player),
 			lastId:     0,
-			Rects: []Rect{
-				Rect{-10, -10, 10, 10},
-				Rect{-19, 0, -9, 0},
-				Rect{-19, 0, -19, 10},
-			},
 		}
+		game.generateMap()
 		mux.Lock()
 		games[id] = game
 		mux.Unlock()
@@ -101,6 +143,17 @@ func getGame(id string) *Game {
 
 func (rect *Rect) Contains(x int, y int) bool {
 	return x >= rect.X1 && x <= rect.X2 && y >= rect.Y1 && y <= rect.Y2
+}
+
+func (rect *Rect) Area() int {
+	return (rect.X2 - rect.X1) * (rect.Y2 - rect.Y1)
+}
+
+func (rect *Rect) Center() Point {
+	return Point{
+		(rect.X2 + rect.X1) / 2,
+		(rect.Y2 + rect.Y1) / 2,
+	}
 }
 
 func (game *Game) broadcast(msgs []Message) {
