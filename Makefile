@@ -1,12 +1,12 @@
 .PHONY: live
 live:
-	printf 'laneya.go\nindex.html\nstyle.css\nmain.js\n' | entr -r make lint run
+	echo laneya.go | entr -r make lint run
 
 .PHONY: run
 run: laneya
-	./laneya -v
+	./laneya -v -s
 
-laneya: laneya.go index.html style.css main.js
+laneya: laneya.go
 	go build $<
 
 .PHONY: lint

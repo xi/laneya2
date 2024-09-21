@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	_ "embed"
 	"flag"
 	"fmt"
 	"log"
@@ -18,17 +17,9 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-//go:embed index.html
-var html []byte
-
-//go:embed style.css
-var css []byte
-
-//go:embed main.js
-var js []byte
-
 var upgrader = websocket.Upgrader{}
 var verbose = false
+var static = false
 
 type Point struct {
 	X int `json:"x"`
@@ -330,24 +321,6 @@ func (player *Player) writePump() {
 	}
 }
 
-func serveHome(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html")
-	w.WriteHeader(http.StatusOK)
-	w.Write(html)
-}
-
-func serveCSS(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/css")
-	w.WriteHeader(http.StatusOK)
-	w.Write(css)
-}
-
-func serveJS(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/javascript")
-	w.WriteHeader(http.StatusOK)
-	w.Write(js)
-}
-
 func serveWs(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -377,11 +350,12 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "laneya [-v] [port]\n")
+		fmt.Fprintf(os.Stderr, "laneya [-v] [-s] [port]\n")
 		flag.PrintDefaults()
 	}
 
 	flag.BoolVar(&verbose, "v", false, "enable verbose logs")
+	flag.BoolVar(&static, "s", false, "serve static files (for development)")
 	flag.Parse()
 
 	addr := "localhost:8000"
@@ -389,9 +363,12 @@ func main() {
 		addr = fmt.Sprintf("localhost:%s", flag.Args()[0])
 	}
 
-	http.HandleFunc("GET /{$}", serveHome)
-	http.HandleFunc("GET /style.css", serveCSS)
-	http.HandleFunc("GET /main.js", serveJS)
+	if static {
+		http.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, "index.html")
+		})
+		http.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	}
 	http.HandleFunc("GET /ws/{id}", serveWs)
 
 	ctx, unregisterSignals := signal.NotifyContext(
