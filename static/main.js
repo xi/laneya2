@@ -19,7 +19,7 @@ var game = {
             return ['>', -1];
         }
         if (Object.values(this.objects).some(obj => x === obj.pos.x && y === obj.pos.y)) {
-            return ['@', 1];
+            return ['@', 4];
         }
         if (this.rects.some(rect => x >= rect.x1 && x <= rect.x2 && y >= rect.y1 && y <= rect.y2)) {
             return ['.', -1];
