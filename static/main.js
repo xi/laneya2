@@ -1,4 +1,5 @@
 var $pre = document.querySelector('pre');
+var radius = 5;
 
 var params = new URLSearchParams(location.search);
 var gameId = params.get('game');
@@ -12,22 +13,50 @@ var send = function(data) {
 var game = {
     id: -1,
     rects: [],
+    seen: {},
     objects: {},
 
+    inView(a, b) {
+        var dx = a.x - b.x;
+        var dy = a.y - b.y;
+        return dx * dx + dy * dy < radius * radius;
+    },
+
     getChar(x, y) {
+        if (!this.seen[[x, y]]) {
+            return [' ', -1];
+        }
+
+        var inView = Object.values(this.objects).some(
+            obj => obj.type === 'player' && this.inView(obj.pos, {x, y})
+        );
+        var white = inView ? -1 : 0;
+
         if (x === this.ladder.x && y === this.ladder.y) {
-            return ['>', -1];
+            return ['>', white];
         }
         if (Object.values(this.objects).some(obj => x === obj.pos.x && y === obj.pos.y)) {
             return ['@', 4];
         }
         if (this.rects.some(rect => x >= rect.x1 && x <= rect.x2 && y >= rect.y1 && y <= rect.y2)) {
-            return ['.', -1];
+            return ['.', white];
         }
         if (this.rects.some(rect => x >= rect.x1 - 1 && x <= rect.x2 + 1 && y >= rect.y1 - 1 && y <= rect.y2 + 1)) {
-            return ['#', -1];
+            return ['#', white];
         }
         return [' ', -1];
+    },
+
+    updateSeen(pos) {
+        for (let dy = -radius; dy <= radius; dy++) {
+            const y = pos.y + dy;
+            for (let dx = -radius; dx <= radius; dx++) {
+                const x = pos.x + dx;
+                if (!this.seen[[x, y]] && this.inView(pos, {x, y})) {
+                    this.seen[[x, y]] = true;
+                }
+            }
+        }
     },
 };
 
@@ -100,13 +129,20 @@ socket.onmessage = function(event) {
             game.ladder = msg.ladder;
             game.horizontal = msg.horizontal;
             game.vertical = msg.vertical;
+            game.seen = {};
         } else if (msg.action === 'create') {
             game.objects[msg.id] = {
                 type: msg.type,
                 pos: msg.pos,
             };
+            if (msg.type === 'player') {
+                game.updateSeen(msg.pos);
+            }
         } else if (msg.action === 'setPosition') {
             game.objects[msg.id].pos = msg.pos;
+            if (game.objects[msg.id].type === 'player') {
+                game.updateSeen(msg.pos);
+            }
         } else if (msg.action === 'remove') {
             delete game.objects[msg.id];
         }
