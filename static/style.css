@@ -2,14 +2,14 @@
 	background: #fff;
 	color: #000;
 }
-.color-0 { color: #ccc }
+.color-0 { color: #999 }
 .color-1 { color: #c00 }
 .color-2 { color: #591 }
 .color-3 { color: #b71 }
 .color-4 { color: #16c }
 .color-5 { color: #96a }
 .color-6 { color: #299 }
-.color-7 { color: #333 }
+.color-7 { color: #555 }
 
 @media (prefers-color-scheme: dark) {
 	:root {
@@ -17,12 +17,12 @@
 		background: #000;
 		color: #fff;
 	}
-	.color-0 { color: #333 }
+	.color-0 { color: #555 }
 	.color-1 { color: #f33 }
 	.color-2 { color: #7c0 }
 	.color-3 { color: #ed0 }
 	.color-4 { color: #6ad }
 	.color-5 { color: #c8b }
 	.color-6 { color: #0dd }
-	.color-7 { color: #ccc }
+	.color-7 { color: #999 }
 }
