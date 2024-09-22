@@ -4,7 +4,8 @@ var radius = 5;
 var params = new URLSearchParams(location.search);
 var gameId = params.get('game');
 
-var socket = new WebSocket(`ws://${location.host}/ws/${gameId}`);
+var socketProtocol = location.protocol.replace('http', 'ws');
+var socket = new WebSocket(`${socketProtocol}//${location.host}/ws/${gameId}`);
 
 var send = function(data) {
     socket.send(JSON.stringify(data));
