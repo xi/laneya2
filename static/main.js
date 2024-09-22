@@ -46,22 +46,21 @@ var game = {
             return [' ', -1];
         }
 
-        var inView = Object.values(this.objects).some(
+        var inView = () => Object.values(this.objects).some(
             obj => obj.type === 'player' && this.inView(obj.pos, {x, y})
         );
-        var white = inView ? -1 : 0;
 
         if (x === this.ladder.x && y === this.ladder.y) {
-            return ['>', white];
+            return ['>', inView() ? -1 : 0];
         }
         if (Object.values(this.objects).some(obj => x === obj.pos.x && y === obj.pos.y)) {
             return ['@', 4];
         }
         if (this.getRect({x, y})) {
-            return ['.', white];
+            return ['.', inView() ? -1 : 0];
         }
         if (this.getRect({x, y}, true)) {
-            return ['#', white];
+            return ['#', inView() ? -1 : 0];
         }
         return [' ', -1];
     },
