@@ -46,6 +46,9 @@ func getGame(id string) *Game {
 	mux.RUnlock()
 
 	if !ok {
+		if verbose {
+			log.Println("create game", id)
+		}
 		game = &Game{
 			Id:         id,
 			Players:    make(map[*Player]bool),
@@ -145,6 +148,9 @@ func (game *Game) run() {
 	for {
 		select {
 		case player := <-game.register:
+			if verbose {
+				log.Println("create player", game.Id, player.Id)
+			}
 			setup := []Message{
 				Message{
 					"action": "setId",
@@ -177,8 +183,14 @@ func (game *Game) run() {
 				},
 			})
 		case player := <-game.unregister:
+			if verbose {
+				log.Println("remove player", game.Id, player.Id)
+			}
 			delete(game.Players, player)
 			if len(game.Players) == 0 {
+				if verbose {
+					log.Println("remove game", game.Id)
+				}
 				mux.Lock()
 				delete(games, game.Id)
 				mux.Unlock()
@@ -217,8 +229,8 @@ func (game *Game) run() {
 
 					game.MaybeNextLevel()
 				}
-			} else {
-				log.Println(msg)
+			} else if verbose {
+				log.Println("unknown action", msg)
 			}
 		}
 	}

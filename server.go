@@ -27,6 +27,9 @@ func (player *Player) readPump() {
 		msg := Message{}
 		err := player.conn.ReadJSON(&msg)
 		if err != nil {
+			if verbose {
+				log.Println(err)
+			}
 			return
 		}
 		player.Game.Msg <- PlayerMessage{player, msg}
@@ -43,6 +46,9 @@ func (player *Player) writePump() {
 		case data := <-player.Send:
 			err := player.conn.WriteJSON(data)
 			if err != nil {
+				if verbose {
+					log.Println(err)
+				}
 				return
 			}
 		case <-ticker.C:
@@ -52,6 +58,9 @@ func (player *Player) writePump() {
 			player.alive = false
 			err := player.conn.WriteMessage(websocket.PingMessage, nil)
 			if err != nil {
+				if verbose {
+					log.Println(err)
+				}
 				return
 			}
 		}
@@ -61,7 +70,9 @@ func (player *Player) writePump() {
 func serveWs(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println(err)
+		if verbose {
+			log.Println(err)
+		}
 		return
 	}
 

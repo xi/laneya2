@@ -122,7 +122,6 @@ socket.onclose = function() {
 socket.onmessage = function(event) {
     var messages = JSON.parse(event.data);
     for (const msg of messages) {
-        console.log(msg);
         if (msg.action === 'setId') {
             game.id = msg.id;
         } else if (msg.action === 'setLevel') {
@@ -146,6 +145,8 @@ socket.onmessage = function(event) {
             }
         } else if (msg.action === 'remove') {
             delete game.objects[msg.id];
+        } else {
+            console.log(msg);
         }
     }
     render();
