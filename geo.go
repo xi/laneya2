@@ -36,6 +36,10 @@ func (rect *Rect) Area() int {
 	return (rect.X2 - rect.X1) * (rect.Y2 - rect.Y1)
 }
 
+func (rect *Rect) Perimeter() int {
+	return ((rect.X2 - rect.X1) + (rect.Y2 - rect.Y1)) * 2
+}
+
 func (rect *Rect) Contains(x int, y int) bool {
 	return x >= rect.X1 && x <= rect.X2 && y >= rect.Y1 && y <= rect.Y2
 }
@@ -44,5 +48,12 @@ func (rect *Rect) Center() Point {
 	return Point{
 		(rect.X2 + rect.X1) / 2,
 		(rect.Y2 + rect.Y1) / 2,
+	}
+}
+
+func (rect *Rect) RandomPoint() Point {
+	return Point{
+		rect.X1 + rand.Intn(rect.X2-rect.X1+1),
+		rect.Y1 + rand.Intn(rect.Y2-rect.Y1+1),
 	}
 }

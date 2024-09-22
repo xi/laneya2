@@ -80,14 +80,14 @@ func (game *Game) createId() int {
 }
 
 func (game *Game) generateMap() {
-	prev := Rect{-5, -5, 5, 5}
+	prev := Rect{-3, -3, 3, 3}
 
 	game.Rects = []Rect{prev}
 	lines := []Rect{}
 
-	for i := 1; i <= 12; i++ {
-		rect := randomRect(50)
-		if rect.Area() < 250 {
+	for i := 1; i <= 15; i++ {
+		rect := randomRect(25)
+		if rect.Area() < 150 && rect.Perimeter() < 80 {
 			game.Rects = append(game.Rects, rect)
 
 			p1 := prev.Center()
@@ -100,7 +100,7 @@ func (game *Game) generateMap() {
 		}
 	}
 
-	game.Ladder = prev.Center()
+	game.Ladder = prev.RandomPoint()
 
 	for _, line := range lines {
 		game.Rects = append(game.Rects, line)
