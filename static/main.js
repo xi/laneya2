@@ -11,11 +11,29 @@ var send = function(data) {
     socket.send(JSON.stringify(data));
 };
 
+var inRect = function(pos, rect, withWalls) {
+    if (withWalls) {
+        return pos.x >= rect.x1 - 1 && pos.x <= rect.x2 + 1
+            && pos.y >= rect.y1 - 1 && pos.y <= rect.y2 + 1;
+    } else {
+        return pos.x >= rect.x1 && pos.x <= rect.x2
+            && pos.y >= rect.y1 && pos.y <= rect.y2;
+    }
+};
+
 var game = {
     id: -1,
     rects: [],
     seen: {},
     objects: {},
+
+    getRect(pos, withWalls) {
+        for (const rect of this.rects) {
+            if (inRect(pos, rect, withWalls)) {
+                return rect;
+            }
+        }
+    },
 
     inView(a, b) {
         var dx = a.x - b.x;
@@ -39,10 +57,10 @@ var game = {
         if (Object.values(this.objects).some(obj => x === obj.pos.x && y === obj.pos.y)) {
             return ['@', 4];
         }
-        if (this.rects.some(rect => x >= rect.x1 && x <= rect.x2 && y >= rect.y1 && y <= rect.y2)) {
+        if (this.getRect({x, y})) {
             return ['.', white];
         }
-        if (this.rects.some(rect => x >= rect.x1 - 1 && x <= rect.x2 + 1 && y >= rect.y1 - 1 && y <= rect.y2 + 1)) {
+        if (this.getRect({x, y}, true)) {
             return ['#', white];
         }
         return [' ', -1];
