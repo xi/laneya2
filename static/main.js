@@ -36,9 +36,59 @@ var game = {
     },
 
     inView(a, b) {
+        // check radius
         var dx = a.x - b.x;
         var dy = a.y - b.y;
-        return dx * dx + dy * dy < radius * radius;
+        if (dx * dx + dy * dy >= radius * radius) {
+            return false;
+        }
+
+        // perf: shortcut if in same rect
+        for (const rect of this.rects) {
+            if (
+                inRect(a, rect, true) && inRect(b, rect, true)
+                && (inRect(a, rect) || inRect(b, rect))
+            ) {
+                return true;
+            }
+        }
+
+        // ray casting
+        if (Math.abs(dx) > Math.abs(dy)) {
+            const [c, d] = a.x > b.x ? [b, a] : [a, b];
+            return [
+                [c.y + 0.4, d.y + 0.4],
+                [c.y + 0.4, d.y - 0.4],
+                [c.y - 0.4, d.y + 0.4],
+                [c.y - 0.4, d.y - 0.4],
+            ].some(([y1, y2]) => {
+                const f = (y2 - y1) / (d.x - c.x);
+                for (let x = c.x + 1; x < d.x; x++) {
+                    const y = Math.round((x - c.x) * f + y1);
+                    if (!this.getRect({x, y})) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+        } else {
+            const [c, d] = a.y > b.y ? [b, a] : [a, b];
+            return [
+                [c.x + 0.4, d.x + 0.4],
+                [c.x + 0.4, d.x - 0.4],
+                [c.x - 0.4, d.x + 0.4],
+                [c.x - 0.4, d.x - 0.4],
+            ].some(([x1, x2]) => {
+                const f = (x2 - x1) / (d.y - c.y);
+                for (let y = c.y + 1; y < d.y; y++) {
+                    const x = Math.round((y - c.y) * f + x1);
+                    if (!this.getRect({x, y})) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+        }
     },
 
     getChar(x, y) {
