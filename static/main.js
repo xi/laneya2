@@ -6,6 +6,7 @@ var gameId = params.get('game');
 
 var socketProtocol = location.protocol.replace('http', 'ws');
 var socket = new WebSocket(`${socketProtocol}//${location.host}/ws/${gameId}`);
+var pointer = null;
 
 var send = function(data) {
     socket.send(JSON.stringify(data));
@@ -233,3 +234,50 @@ document.onkeydown = function(event) {
     }
     event.preventDefault();
 };
+
+var click = function() {
+    var x = pointer.x / innerWidth - 0.5;
+    var y = pointer.y / innerHeight - 0.5;
+    if (Math.abs(x) > Math.abs(y)) {
+        send({action: 'move', dir: x > 0 ? 'right' : 'left'});
+    } else {
+        send({action: 'move', dir: y > 0 ? 'down' : 'up'});
+    }
+};
+
+document.addEventListener('pointerdown', event => {
+    if (!pointer && (event.buttons & 1 || event.pointerType !== 'mouse')) {
+        event.preventDefault();
+        $pre.setPointerCapture(event.pointerId);
+        pointer = {
+            id: event.pointerId,
+            x: event.clientX,
+            y: event.clientY,
+            timeout: setTimeout(() => {
+                click();
+                pointer.timeout = setInterval(() => {
+                    click();
+                }, 40);
+            }, 200),
+        };
+        click();
+    }
+});
+
+document.addEventListener('pointermove', event => {
+    if (pointer && event.pointerId === pointer.id) {
+        event.preventDefault();
+        pointer.x = event.clientX;
+        pointer.y = event.clientY;
+    }
+});
+
+var pointerup = function(event) {
+    if (pointer && event.pointerId === pointer.id) {
+        clearTimeout(pointer.timeout);
+        pointer = null;
+    }
+};
+
+document.addEventListener('pointerup', pointerup);
+document.addEventListener('pointercancel', pointerup);
