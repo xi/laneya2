@@ -12,6 +12,11 @@ var send = function(data) {
     socket.send(JSON.stringify(data));
 };
 
+var COLORS = {
+    'player': 4,
+    'monster': 1,
+};
+
 var inRect = function(pos, rect, withWalls) {
     if (withWalls) {
         return pos.x >= rect.x1 - 1 && pos.x <= rect.x2 + 1
@@ -104,8 +109,11 @@ var game = {
         if (x === this.ladder.x && y === this.ladder.y) {
             return ['>', inView() ? -1 : 0];
         }
-        if (Object.values(this.objects).some(obj => x === obj.pos.x && y === obj.pos.y)) {
-            return ['@', 4];
+        var objs = Object.values(this.objects).filter(obj => x === obj.pos.x && y === obj.pos.y);
+        for (const obj of objs) {
+            if (obj.type === 'player' || inView()) {
+                return [obj.rune, COLORS[obj.type]];
+            }
         }
         if (this.getRect({x, y})) {
             return ['.', inView() ? -1 : 0];
@@ -198,10 +206,16 @@ socket.onmessage = function(event) {
             game.horizontal = msg.horizontal;
             game.vertical = msg.vertical;
             game.seen = {};
+            for (const [id, obj] of Object.entries(game.objects)) {
+                if (obj.type !== 'player') {
+                    delete game.objects[id];
+                }
+            }
         } else if (msg.action === 'create') {
             game.objects[msg.id] = {
                 type: msg.type,
                 pos: msg.pos,
+                rune: msg.rune,
             };
             if (msg.type === 'player') {
                 game.updateSeen(msg.pos);

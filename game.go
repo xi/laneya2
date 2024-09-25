@@ -19,6 +19,14 @@ type Player struct {
 	Speed float32
 }
 
+type Monster struct {
+	Game  *Game
+	Id    int
+	Rune  rune
+	Pos   Point
+	Speed float32
+}
+
 type PlayerMessage struct {
 	Player *Player
 	Msg    Message
@@ -27,6 +35,7 @@ type PlayerMessage struct {
 type Game struct {
 	Id         string
 	Players    map[*Player]bool
+	Monsters   map[*Monster]bool
 	Msg        chan PlayerMessage
 	register   chan *Player
 	unregister chan *Player
@@ -53,6 +62,7 @@ func getGame(id string) *Game {
 		game = &Game{
 			Id:         id,
 			Players:    make(map[*Player]bool),
+			Monsters:   make(map[*Monster]bool),
 			Msg:        make(chan PlayerMessage),
 			register:   make(chan *Player),
 			unregister: make(chan *Player),
@@ -81,6 +91,10 @@ func (game *Game) createId() int {
 }
 
 func (game *Game) generateMap() {
+	for monster := range game.Monsters {
+		delete(game.Monsters, monster)
+	}
+
 	prev := Rect{-3, -3, 3, 3}
 
 	game.Rects = []Rect{prev}
@@ -96,6 +110,15 @@ func (game *Game) generateMap() {
 
 			lines = append(lines, makeRect(p1.X, p1.Y, p2.X, p1.Y))
 			lines = append(lines, makeRect(p2.X, p1.Y, p2.X, p2.Y))
+
+			monster := Monster{
+				game,
+				game.createId(),
+				'm',
+				rect.RandomPoint(),
+				2,
+			}
+			game.Monsters[&monster] = true
 
 			prev = rect
 		}
@@ -133,6 +156,16 @@ func (game *Game) MaybeNextLevel() {
 		},
 	}
 
+	for monster := range game.Monsters {
+		msgs = append(msgs, Message{
+			"action": "create",
+			"type":   "monster",
+			"rune":   string(monster.Rune),
+			"id":     monster.Id,
+			"pos":    monster.Pos,
+		})
+	}
+
 	for player := range game.Players {
 		player.Pos = Point{0, 0}
 		msgs = append(msgs, Message{
@@ -163,10 +196,20 @@ func (game *Game) run() {
 					"ladder": game.Ladder,
 				},
 			}
+			for monster := range game.Monsters {
+				setup = append(setup, Message{
+					"action": "create",
+					"type":   "monster",
+					"rune":   string(monster.Rune),
+					"id":     monster.Id,
+					"pos":    monster.Pos,
+				})
+			}
 			for p := range game.Players {
 				setup = append(setup, Message{
 					"action": "create",
 					"type":   "player",
+					"rune":   "@",
 					"id":     p.Id,
 					"pos":    p.Pos,
 				})
@@ -179,6 +222,7 @@ func (game *Game) run() {
 				Message{
 					"action": "create",
 					"type":   "player",
+					"rune":   "@",
 					"id":     player.Id,
 					"pos":    player.Pos,
 				},
