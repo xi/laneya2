@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -21,6 +22,7 @@ type Player struct {
 
 type Monster struct {
 	Game  *Game
+	quit  chan bool
 	Id    int
 	Rune  rune
 	Pos   Point
@@ -32,11 +34,17 @@ type PlayerMessage struct {
 	Msg    Message
 }
 
+type MonsterMessage struct {
+	Monster *Monster
+	Msg     Message
+}
+
 type Game struct {
 	Id         string
 	Players    map[*Player]bool
 	Monsters   map[*Monster]bool
 	Msg        chan PlayerMessage
+	MMsg       chan MonsterMessage
 	register   chan *Player
 	unregister chan *Player
 	lastId     int
@@ -64,6 +72,7 @@ func getGame(id string) *Game {
 			Players:    make(map[*Player]bool),
 			Monsters:   make(map[*Monster]bool),
 			Msg:        make(chan PlayerMessage),
+			MMsg:       make(chan MonsterMessage),
 			register:   make(chan *Player),
 			unregister: make(chan *Player),
 			lastId:     0,
@@ -79,6 +88,27 @@ func getGame(id string) *Game {
 	return game
 }
 
+func (monster *Monster) run() {
+	timeout := time.Duration(float32(time.Second) / monster.Speed)
+	ticker := time.NewTicker(timeout)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-monster.quit:
+			return
+		case <-ticker.C:
+			monster.Game.MMsg <- MonsterMessage{
+				monster,
+				Message{
+					"action": "move",
+					"dir":    RandomDir(),
+				},
+			}
+		}
+	}
+}
+
 func (game *Game) broadcast(msgs []Message) {
 	for player, _ := range game.Players {
 		player.Send <- msgs
@@ -92,6 +122,7 @@ func (game *Game) createId() int {
 
 func (game *Game) generateMap() {
 	for monster := range game.Monsters {
+		monster.quit <- true
 		delete(game.Monsters, monster)
 	}
 
@@ -113,12 +144,14 @@ func (game *Game) generateMap() {
 
 			monster := Monster{
 				game,
+				make(chan bool),
 				game.createId(),
 				'm',
 				rect.RandomPoint(),
 				2,
 			}
 			game.Monsters[&monster] = true
+			go monster.run()
 
 			prev = rect
 		}
@@ -276,6 +309,32 @@ func (game *Game) run() {
 				}
 			} else if verbose {
 				log.Println("unknown action", msg)
+			}
+		case mmsg := <-game.MMsg:
+			monster := mmsg.Monster
+			msg := mmsg.Msg
+
+			if msg["action"] == "move" {
+				pos := monster.Pos
+				if msg["dir"] == "up" {
+					pos.Y -= 1
+				} else if msg["dir"] == "right" {
+					pos.X += 1
+				} else if msg["dir"] == "down" {
+					pos.Y += 1
+				} else if msg["dir"] == "left" {
+					pos.X -= 1
+				}
+				if game.IsFree(pos.X, pos.Y) {
+					monster.Pos = pos
+					game.broadcast([]Message{
+						Message{
+							"action": "setPosition",
+							"id":     monster.Id,
+							"pos":    monster.Pos,
+						},
+					})
+				}
 			}
 		}
 	}

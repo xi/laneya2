@@ -14,6 +14,8 @@ type Rect struct {
 	Y2 int `json:"y2"`
 }
 
+var dirs = []string{"up", "right", "down", "left"}
+
 func makeRect(x1 int, y1 int, x2 int, y2 int) Rect {
 	if x1 > x2 {
 		x1, x2 = x2, x1
@@ -56,4 +58,8 @@ func (rect *Rect) RandomPoint() Point {
 		rect.X1 + rand.Intn(rect.X2-rect.X1+1),
 		rect.Y1 + rand.Intn(rect.Y2-rect.Y1+1),
 	}
+}
+
+func RandomDir() string {
+	return dirs[rand.Intn(4)]
 }
