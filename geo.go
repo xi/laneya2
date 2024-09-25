@@ -16,6 +16,34 @@ type Rect struct {
 
 var dirs = []string{"up", "right", "down", "left"}
 
+func dist(a int, b int) int {
+	if a > b {
+		return a - b
+	} else {
+		return b - a
+	}
+}
+
+func (point *Point) Dist(other Point) int {
+	return dist(point.X, other.X) + dist(point.Y, other.Y)
+}
+
+func (point *Point) Dir(other Point) string {
+	if dist(point.X, other.X) > dist(point.Y, other.Y) {
+		if point.X > other.X {
+			return "left"
+		} else {
+			return "right"
+		}
+	} else {
+		if point.Y > other.Y {
+			return "up"
+		} else {
+			return "down"
+		}
+	}
+}
+
 func (point *Point) Move(dir string) Point {
 	if dir == "up" {
 		return Point{point.X, point.Y - 1}

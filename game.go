@@ -98,11 +98,25 @@ func (monster *Monster) run() {
 		case <-monster.quit:
 			return
 		case <-ticker.C:
+			bestDist := 100000
+			dir := "left"
+			for player := range monster.Game.Players {
+				dist := monster.Pos.Dist(player.Pos)
+				if dist < bestDist {
+					bestDist = dist
+					dir = monster.Pos.Dir(player.Pos)
+				}
+			}
+
+			if bestDist > 10 || !monster.Game.IsFree(monster.Pos.Move(dir)) {
+				dir = RandomDir()
+			}
+
 			monster.Game.MMsg <- MonsterMessage{
 				monster,
 				Message{
 					"action": "move",
-					"dir":    RandomDir(),
+					"dir":    dir,
 				},
 			}
 		}
