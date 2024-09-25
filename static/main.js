@@ -203,8 +203,6 @@ socket.onmessage = function(event) {
         } else if (msg.action === 'setLevel') {
             game.rects = msg.rects;
             game.ladder = msg.ladder;
-            game.horizontal = msg.horizontal;
-            game.vertical = msg.vertical;
             game.seen = {};
             for (const [id, obj] of Object.entries(game.objects)) {
                 if (obj.type !== 'player') {
