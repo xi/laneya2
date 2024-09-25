@@ -16,6 +16,7 @@ type Player struct {
 	alive bool
 	Id    int
 	Pos   Point
+	Speed float32
 }
 
 type PlayerMessage struct {

@@ -18,7 +18,13 @@ import (
 var upgrader = websocket.Upgrader{}
 
 func (player *Player) readPump() {
+	var timer *time.Timer = nil
+	var lastTime time.Time = time.UnixMicro(0)
+
 	defer func() {
+		if timer != nil {
+			timer.Stop()
+		}
 		player.Game.unregister <- player
 		player.conn.Close()
 	}()
@@ -32,7 +38,16 @@ func (player *Player) readPump() {
 			}
 			return
 		}
-		player.Game.Msg <- PlayerMessage{player, msg}
+
+		if timer != nil {
+			timer.Stop()
+		}
+		timeout := time.Duration(float32(time.Second) / player.Speed)
+		timer = time.AfterFunc(time.Until(lastTime.Add(timeout)), func() {
+			lastTime = time.Now()
+			player.Game.Msg <- PlayerMessage{player, msg}
+			timer = nil
+		})
 	}
 }
 
@@ -85,6 +100,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		alive: true,
 		Id:    game.createId(),
 		Pos:   Point{0, 0},
+		Speed: 20,
 	}
 	conn.SetPongHandler(func(string) error {
 		player.alive = true
