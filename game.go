@@ -164,9 +164,9 @@ func (game *Game) generateMap() {
 	}
 }
 
-func (game *Game) IsFree(x int, y int) bool {
+func (game *Game) IsFree(p Point) bool {
 	for _, rect := range game.Rects {
-		if rect.Contains(x, y) {
+		if rect.Contains(p) {
 			return true
 		}
 	}
@@ -285,17 +285,12 @@ func (game *Game) run() {
 			msg := cmsg.Msg
 
 			if msg["action"] == "move" {
-				pos := player.Pos
-				if msg["dir"] == "up" {
-					pos.Y -= 1
-				} else if msg["dir"] == "right" {
-					pos.X += 1
-				} else if msg["dir"] == "down" {
-					pos.Y += 1
-				} else if msg["dir"] == "left" {
-					pos.X -= 1
+				dir, ok := msg["dir"].(string)
+				if !ok {
+					continue
 				}
-				if game.IsFree(pos.X, pos.Y) {
+				pos := player.Pos.Move(dir)
+				if game.IsFree(pos) {
 					player.Pos = pos
 					game.broadcast([]Message{
 						Message{
@@ -325,7 +320,7 @@ func (game *Game) run() {
 				} else if msg["dir"] == "left" {
 					pos.X -= 1
 				}
-				if game.IsFree(pos.X, pos.Y) {
+				if game.IsFree(pos) {
 					monster.Pos = pos
 					game.broadcast([]Message{
 						Message{

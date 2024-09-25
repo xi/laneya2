@@ -16,6 +16,18 @@ type Rect struct {
 
 var dirs = []string{"up", "right", "down", "left"}
 
+func (point *Point) Move(dir string) Point {
+	if dir == "up" {
+		return Point{point.X, point.Y - 1}
+	} else if dir == "right" {
+		return Point{point.X + 1, point.Y}
+	} else if dir == "down" {
+		return Point{point.X, point.Y + 1}
+	} else {
+		return Point{point.X - 1, point.Y}
+	}
+}
+
 func makeRect(x1 int, y1 int, x2 int, y2 int) Rect {
 	if x1 > x2 {
 		x1, x2 = x2, x1
@@ -42,8 +54,8 @@ func (rect *Rect) Perimeter() int {
 	return ((rect.X2 - rect.X1) + (rect.Y2 - rect.Y1)) * 2
 }
 
-func (rect *Rect) Contains(x int, y int) bool {
-	return x >= rect.X1 && x <= rect.X2 && y >= rect.Y1 && y <= rect.Y2
+func (rect *Rect) Contains(p Point) bool {
+	return p.X >= rect.X1 && p.X <= rect.X2 && p.Y >= rect.Y1 && p.Y <= rect.Y2
 }
 
 func (rect *Rect) Center() Point {
