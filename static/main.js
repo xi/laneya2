@@ -1,4 +1,5 @@
 var $pre = document.querySelector('pre');
+var $dpad = document.querySelector('#dpad');
 var radius = 5;
 
 var params = new URLSearchParams(location.search);
@@ -257,8 +258,9 @@ document.onkeydown = function(event) {
 };
 
 var click = function() {
-    var x = pointer.x / innerWidth - 0.5;
-    var y = pointer.y / innerHeight - 0.5;
+    var rect = $dpad.getBoundingClientRect();
+    var x = (pointer.x - rect.x) / rect.width - 0.5;
+    var y = (pointer.y - rect.y) / rect.height - 0.5;
     if (Math.abs(x) > Math.abs(y)) {
         send({action: 'move', dir: x > 0 ? 'right' : 'left'});
     } else {
@@ -266,10 +268,10 @@ var click = function() {
     }
 };
 
-document.addEventListener('pointerdown', event => {
+$dpad.addEventListener('pointerdown', event => {
     if (!pointer && (event.buttons & 1 || event.pointerType !== 'mouse')) {
         event.preventDefault();
-        $pre.setPointerCapture(event.pointerId);
+        $dpad.setPointerCapture(event.pointerId);
         pointer = {
             id: event.pointerId,
             x: event.clientX,
@@ -285,7 +287,7 @@ document.addEventListener('pointerdown', event => {
     }
 });
 
-document.addEventListener('pointermove', event => {
+$dpad.addEventListener('pointermove', event => {
     if (pointer && event.pointerId === pointer.id) {
         event.preventDefault();
         pointer.x = event.clientX;
@@ -300,5 +302,5 @@ var pointerup = function(event) {
     }
 };
 
-document.addEventListener('pointerup', pointerup);
-document.addEventListener('pointercancel', pointerup);
+$dpad.addEventListener('pointerup', pointerup);
+$dpad.addEventListener('pointercancel', pointerup);

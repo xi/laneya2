@@ -1,12 +1,33 @@
+:root {
+	--bg: #fff;
+	--fg: #000;
+
+	background: var(--bg);
+	color: var(--fg);
+}
+
 pre {
 	line-height: 1;
 	letter-spacing: 0.1em;
 }
 
-:root {
-	background: #fff;
-	color: #000;
+#dpad {
+	position: fixed;
+	inset-block-end: 1em;
+	inset-inline-start: 1em;
+	inline-size: 10em;
+	max-inline-size: 30%;
+	opacity: 0.3;
 }
+#dpad circle {
+	fill: var(--fg);
+}
+#dpad path {
+	fill: none;
+	stroke: var(--bg);
+	stroke-width: 2;
+}
+
 .color-0 { color: #999 }
 .color-1 { color: #c00 }
 .color-2 { color: #591 }
@@ -19,8 +40,8 @@ pre {
 @media (prefers-color-scheme: dark) {
 	:root {
 		color-scheme: dark;
-		background: #000;
-		color: #fff;
+		--bg: #000;
+		--fg: #fff;
 	}
 	.color-0 { color: #555 }
 	.color-1 { color: #f33 }
@@ -30,4 +51,8 @@ pre {
 	.color-5 { color: #c8b }
 	.color-6 { color: #0dd }
 	.color-7 { color: #999 }
+
+	#dpad {
+		opacity: 0.1;
+	}
 }
