@@ -158,35 +158,34 @@ var render = function() {
 
     $pre.style.fontSize = fontSize;
     $pre.innerHTML = '';
-    var spanColor = -1;
-    var span = '';
 
-    var commitSpan = () => {
-        if (spanColor === -1) {
-            $pre.append(span);
+    var commitSpan = (text, color) => {
+        if (color === -1) {
+            $pre.append(text);
         } else {
             var $span = document.createElement('span');
-            $span.innerText = span;
-            $span.className = `color-${spanColor}`;
+            $span.innerText = text;
+            $span.className = `color-${color}`;
             $pre.append($span);
         }
-        span = '';
-        spanColor = -1;
     };
 
-    for (let y = 0; y < rows; y++) {
+    for (let y = 1; y < rows; y++) {
+        var span = '';
+        var spanColor = -1;
+
         for (let x = 0; x < cols; x++) {
             const [c, color] = game.getChar(xOffset + x, yOffset + y);
             if (color === spanColor) {
                 span += c;
             } else {
-                commitSpan();
+                commitSpan(span, spanColor);
                 span = c;
                 spanColor = color;
             }
         }
 
-        commitSpan();
+        commitSpan(span, spanColor);
         $pre.append('\n');
     }
 };
