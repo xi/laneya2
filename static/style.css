@@ -18,6 +18,7 @@ pre {
 	inline-size: 10em;
 	max-inline-size: 30%;
 	opacity: 0.3;
+	touch-action: manipulation;
 }
 #dpad circle {
 	fill: var(--fg);
@@ -54,5 +55,12 @@ pre {
 
 	#dpad {
 		opacity: 0.1;
+	}
+}
+
+@media (pointer: coarse) {
+	:root {
+		user-select: none;
+		-webkit-user-select: none;
 	}
 }
