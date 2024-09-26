@@ -11,22 +11,25 @@ import (
 type Message map[string]interface{}
 
 type Player struct {
-	Game  *Game
-	Send  chan []Message
-	conn  *websocket.Conn
-	alive bool
-	Id    int
-	Pos   Point
-	Speed float32
+	Game        *Game
+	Send        chan []Message
+	conn        *websocket.Conn
+	alive       bool
+	Id          int
+	Pos         Point
+	Speed       float32
+	Health      int
+	HealthTotal int
 }
 
 type Monster struct {
-	Game  *Game
-	quit  chan bool
-	Id    int
-	Rune  rune
-	Pos   Point
-	Speed float32
+	Game   *Game
+	quit   chan bool
+	Id     int
+	Rune   rune
+	Pos    Point
+	Speed  float32
+	Health int
 }
 
 type PlayerMessage struct {
@@ -157,12 +160,13 @@ func (game *Game) generateMap() {
 			lines = append(lines, makeRect(p2.X, p1.Y, p2.X, p2.Y))
 
 			monster := Monster{
-				Game:  game,
-				quit:  make(chan bool),
-				Id:    game.createId(),
-				Rune:  'm',
-				Pos:   rect.RandomPoint(),
-				Speed: 2,
+				Game:   game,
+				quit:   make(chan bool),
+				Id:     game.createId(),
+				Rune:   'm',
+				Pos:    rect.RandomPoint(),
+				Speed:  2,
+				Health: 10,
 			}
 			game.Monsters[&monster] = true
 			go monster.run()
@@ -236,6 +240,11 @@ func (game *Game) run() {
 				Message{
 					"action": "setId",
 					"id":     player.Id,
+				},
+				Message{
+					"action":      "setHealth",
+					"health":      player.Health,
+					"healthTotal": player.HealthTotal,
 				},
 				Message{
 					"action": "setLevel",

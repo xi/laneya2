@@ -32,6 +32,8 @@ var game = {
     rects: [],
     seen: {},
     objects: {},
+    health: 1,
+    healthTotal: 1,
 
     getRect(pos, withWalls) {
         for (const rect of this.rects) {
@@ -170,6 +172,11 @@ var render = function() {
         }
     };
 
+    var health = Math.round(game.health / game.healthTotal * cols);
+    commitSpan('='.repeat(health), 1);
+    commitSpan('='.repeat(cols - health), 0);
+    $pre.append('\n');
+
     for (let y = 1; y < rows; y++) {
         var span = '';
         var spanColor = -1;
@@ -222,6 +229,9 @@ socket.onmessage = function(event) {
             if (game.objects[msg.id].type === 'player') {
                 game.updateSeen(msg.pos);
             }
+        } else if (msg.action === 'setHealth') {
+            game.health = msg.health;
+            game.healthTotal = msg.healthTotal;
         } else if (msg.action === 'remove') {
             delete game.objects[msg.id];
         } else {

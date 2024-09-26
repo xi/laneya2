@@ -94,13 +94,15 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	game := getGame(r.PathValue("id"))
 
 	player := &Player{
-		Game:  game,
-		Send:  make(chan []Message),
-		conn:  conn,
-		alive: true,
-		Id:    game.createId(),
-		Pos:   Point{0, 0},
-		Speed: 20,
+		Game:        game,
+		Send:        make(chan []Message),
+		conn:        conn,
+		alive:       true,
+		Id:          game.createId(),
+		Pos:         Point{0, 0},
+		Speed:       20,
+		Health:      100,
+		HealthTotal: 100,
 	}
 	conn.SetPongHandler(func(string) error {
 		player.alive = true
