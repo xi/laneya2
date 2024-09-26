@@ -8,6 +8,8 @@ var gameId = params.get('game');
 var socketProtocol = location.protocol.replace('http', 'ws');
 var socket = new WebSocket(`${socketProtocol}//${location.host}/ws/${gameId}`);
 var pointer = null;
+var rows = null;
+var cols = null;
 
 var send = function(data) {
     socket.send(JSON.stringify(data));
@@ -26,6 +28,34 @@ var inRect = function(pos, rect, withWalls) {
         return pos.x >= rect.x1 && pos.x <= rect.x2
             && pos.y >= rect.y1 && pos.y <= rect.y2;
     }
+};
+
+var binSearch = function(key) {
+    var v2 = 2;
+    while (key(v2) <= 0) {
+        v2 <<= 1;
+    }
+    var v1 = v2 >> 1;
+    while (v2 - v1 > 1) {
+        var v = Math.round((v2 + v1) / 2);
+        if (key(v) > 0) {
+            v2 = v;
+        } else {
+            v1 = v;
+        }
+    }
+    return v1;
+};
+
+var updateSize = function() {
+    rows = binSearch(v => {
+        $pre.textContent = '\n'.repeat(v);
+        return document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    });
+    cols = binSearch(v => {
+        $pre.textContent = ' '.repeat(v);
+        return document.body.scrollWidth - document.body.clientWidth;
+    });
 };
 
 var game = {
@@ -140,17 +170,10 @@ var game = {
     },
 };
 
-var getSize = function() {
-    // minimum is 10x10
-    // maximum is 100x30
-    // consider aspect ratio
-    // find font size and rows/columns for best match
-    // probably have to experiment
-    return [10, 20, 100];
-};
-
 var render = function() {
-    var [fontSize, rows, cols] = getSize();
+    if (!rows || !cols) {
+        updateSize();
+    }
 
     var xOffset = -(cols >> 1);
     var yOffset = -(rows >> 1);
@@ -159,7 +182,6 @@ var render = function() {
         yOffset += game.objects[game.id].pos.y;
     }
 
-    $pre.style.fontSize = fontSize;
     $pre.innerHTML = '';
 
     var commitSpan = (text, color) => {
@@ -304,3 +326,8 @@ var pointerup = function(event) {
 
 $dpad.addEventListener('pointerup', pointerup);
 $dpad.addEventListener('pointercancel', pointerup);
+
+window.addEventListener('resize', () => {
+    rows = null;
+    cols = null;
+});
