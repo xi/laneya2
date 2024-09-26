@@ -157,12 +157,12 @@ func (game *Game) generateMap() {
 			lines = append(lines, makeRect(p2.X, p1.Y, p2.X, p2.Y))
 
 			monster := Monster{
-				game,
-				make(chan bool),
-				game.createId(),
-				'm',
-				rect.RandomPoint(),
-				2,
+				Game:  game,
+				quit:  make(chan bool),
+				Id:    game.createId(),
+				Rune:  'm',
+				Pos:   rect.RandomPoint(),
+				Speed: 2,
 			}
 			game.Monsters[&monster] = true
 			go monster.run()
