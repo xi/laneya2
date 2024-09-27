@@ -71,7 +71,7 @@ func (monster *Monster) Move(dir string) {
 	pos := monster.Pos.Move(dir)
 	player := game.getPlayerAt(pos)
 	if player != nil {
-		// TODO
+		player.TakeDamage(2)
 	} else if game.getMonsterAt(pos) == nil && game.IsFree(pos) {
 		monster.Pos = pos
 		game.broadcast([]Message{
@@ -79,6 +79,20 @@ func (monster *Monster) Move(dir string) {
 				"action": "setPosition",
 				"id":     monster.Id,
 				"pos":    monster.Pos,
+			},
+		})
+	}
+}
+
+func (monster *Monster) TakeDamage(amount int) {
+	monster.Health -= amount
+	if monster.Health <= 0 {
+		monster.quit <- true
+		delete(monster.Game.Monsters, monster)
+		monster.Game.broadcast([]Message{
+			Message{
+				"action": "remove",
+				"id":     monster.Id,
 			},
 		})
 	}

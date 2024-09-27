@@ -24,7 +24,7 @@ func (player *Player) Move(dir string) {
 	pos := player.Pos.Move(dir)
 	monster := game.getMonsterAt(pos)
 	if monster != nil {
-		// TODO
+		monster.TakeDamage(5)
 	} else if game.IsFree(pos) {
 		player.Pos = pos
 		game.broadcast([]Message{
@@ -37,4 +37,15 @@ func (player *Player) Move(dir string) {
 
 		game.MaybeNextLevel()
 	}
+}
+
+func (player *Player) TakeDamage(amount int) {
+	player.Health -= amount
+	player.Game.broadcast([]Message{
+		Message{
+			"action":      "setHealth",
+			"health":      player.Health,
+			"healthTotal": player.HealthTotal,
+		},
+	})
 }
