@@ -52,6 +52,10 @@ var game = {
     objects: {},
     health: 1,
     healthTotal: 1,
+    inventory: {
+        'potion': 1,
+        'dagger': 1,
+    },
 
     getRect(pos, withWalls) {
         for (const rect of this.rects) {
@@ -160,6 +164,9 @@ var game = {
 var screen = {
     rows: null,
     cols: null,
+    menuOpen: false,
+    menuCursor: 0,
+    menuOffset: 0,
 
     updateSize() {
         this.rows = binSearch(v => {
@@ -170,6 +177,17 @@ var screen = {
             $pre.textContent = ' '.repeat(v);
             return document.body.scrollWidth - document.body.clientWidth;
         });
+        this.render();
+    },
+
+    toggleMenu() {
+        if (this.menuOpen) {
+            this.menuOpen = false;
+        } else {
+            this.menuOpen = true;
+            this.menuCursor = 0;
+            this.menuOffset = 0;
+        }
         this.render();
     },
 
@@ -189,6 +207,37 @@ var screen = {
         this.commitSpan('='.repeat(health), 1);
         this.commitSpan('='.repeat(this.cols - health), 0);
         $pre.append('\n');
+    },
+
+    renderMenu() {
+        var rows = this.rows - 3;
+        var items = Object.entries(game.inventory);
+        items.sort();
+
+        if (this.menuCursor > items.length - 1) {
+            this.menuCursor = items.length - 1;
+        }
+        if (this.menuCursor < 0) {
+            this.menuCursor = 0;
+        }
+
+        if (this.menuOffset < this.menuCursor - rows + 1) {
+            this.menuOffset = this.menuCursor - rows + 1;
+        }
+        if (this.menuOffset > this.menuCursor) {
+            this.menuOffset = this.menuCursor;
+        }
+
+        for (let i = 0; i < rows; i++) {
+            if (i + this.menuOffset < items.length) {
+                var [name, count] = items[i + this.menuOffset];
+                var line = ` ${count.toString().padStart(2)} ${name}`
+                    .padEnd(this.cols).substr(0, this.cols);
+                var color = i + this.menuOffset === this.menuCursor ? 'inverse' : -1;
+                this.commitSpan(line, color);
+            }
+            $pre.append('\n');
+        }
     },
 
     renderMap() {
@@ -223,7 +272,11 @@ var screen = {
         $pre.innerHTML = '';
 
         this.renderHealth();
-        this.renderMap();
+        if (this.menuOpen) {
+            this.renderMenu();
+        } else {
+            this.renderMap();
+        }
     },
 };
 
@@ -272,16 +325,31 @@ socket.onmessage = function(event) {
 };
 
 document.onkeydown = function(event) {
-    if (event.key === 'ArrowUp') {
-        send({action: 'move', dir: 'up'});
-    } else if (event.key === 'ArrowRight') {
-        send({action: 'move', dir: 'right'});
-    } else if (event.key === 'ArrowDown') {
-        send({action: 'move', dir: 'down'});
-    } else if (event.key === 'ArrowLeft') {
-        send({action: 'move', dir: 'left'});
+    if (screen.menuOpen) {
+        if (event.key === 'ArrowUp') {
+            screen.menuCursor -= 1;
+        } else if (event.key === 'ArrowDown') {
+            screen.menuCursor += 1;
+        } else if (event.key === 'i') {
+            screen.toggleMenu();
+        } else {
+            return;
+        }
+        screen.render();
     } else {
-        return;
+        if (event.key === 'ArrowUp') {
+            send({action: 'move', dir: 'up'});
+        } else if (event.key === 'ArrowRight') {
+            send({action: 'move', dir: 'right'});
+        } else if (event.key === 'ArrowDown') {
+            send({action: 'move', dir: 'down'});
+        } else if (event.key === 'ArrowLeft') {
+            send({action: 'move', dir: 'left'});
+        } else if (event.key === 'i') {
+            screen.toggleMenu();
+        } else {
+            return;
+        }
     }
     event.preventDefault();
 };
