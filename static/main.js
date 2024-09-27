@@ -286,7 +286,10 @@ document.onkeydown = function(event) {
     event.preventDefault();
 };
 
-onDPad(dir => send({action: 'move', dir: dir}));
+onDPad(key => document.onkeydown({
+    key: key,
+    preventDefault: () => {},
+}));
 
 screen.updateSize();
 window.addEventListener('resize', () => screen.updateSize(), {passive: true});

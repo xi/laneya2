@@ -7,9 +7,9 @@ export default function(handler) {
         var x = (pointer.x - rect.x) / rect.width - 0.5;
         var y = (pointer.y - rect.y) / rect.height - 0.5;
         if (Math.abs(x) > Math.abs(y)) {
-            handler(x > 0 ? 'right' : 'left');
+            handler(x > 0 ? 'ArrowRight' : 'ArrowLeft');
         } else {
-            handler(y > 0 ? 'down' : 'up');
+            handler(y > 0 ? 'ArrowDown' : 'ArrowUp');
         }
     };
 
