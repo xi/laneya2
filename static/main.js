@@ -170,11 +170,7 @@ var screen = {
             $pre.textContent = ' '.repeat(v);
             return document.body.scrollWidth - document.body.clientWidth;
         });
-    },
-
-    invalidateSize() {
-        this.rows = null;
-        this.cols = null;
+        this.render();
     },
 
     commitSpan(text, color) {
@@ -224,10 +220,6 @@ var screen = {
     },
 
     render() {
-        if (!this.rows || !this.cols) {
-            this.updateSize();
-        }
-
         $pre.innerHTML = '';
 
         this.renderHealth();
@@ -296,4 +288,5 @@ document.onkeydown = function(event) {
 
 onDPad(dir => send({action: 'move', dir: dir}));
 
-window.addEventListener('resize', () => screen.invalidateSize());
+screen.updateSize();
+window.addEventListener('resize', () => screen.updateSize(), {passive: true});
