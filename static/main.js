@@ -326,27 +326,33 @@ socket.onmessage = function(event) {
 
 document.onkeydown = function(event) {
     if (screen.menuOpen) {
-        if (event.key === 'ArrowUp') {
+        if (event.key === 'ArrowUp' || event.key === 'w') {
             screen.menuCursor -= 1;
-        } else if (event.key === 'ArrowDown') {
+        } else if (event.key === 'ArrowDown' || event.key === 's') {
             screen.menuCursor += 1;
-        } else if (event.key === 'i') {
+        } else if (event.key === 'ArrowRight' || event.key === 'd') {
+            // TODO: drop
+        } else if (event.key === 'q') {
             screen.toggleMenu();
+        } else if (event.key === 'Enter' || event.key === 'e') {
+            // TODO: use
         } else {
             return;
         }
         screen.render();
     } else {
-        if (event.key === 'ArrowUp') {
+        if (event.key === 'ArrowUp' || event.key === 'w') {
             send({action: 'move', dir: 'up'});
-        } else if (event.key === 'ArrowRight') {
+        } else if (event.key === 'ArrowRight' || event.key === 'd') {
             send({action: 'move', dir: 'right'});
-        } else if (event.key === 'ArrowDown') {
+        } else if (event.key === 'ArrowDown' || event.key === 's') {
             send({action: 'move', dir: 'down'});
-        } else if (event.key === 'ArrowLeft') {
+        } else if (event.key === 'ArrowLeft' || event.key === 'a') {
             send({action: 'move', dir: 'left'});
-        } else if (event.key === 'i') {
+        } else if (event.key === 'q') {
             screen.toggleMenu();
+        } else if (event.key === 'Enter' || event.key === 'e') {
+            // TODO: pick up
         } else {
             return;
         }
@@ -354,10 +360,31 @@ document.onkeydown = function(event) {
     event.preventDefault();
 };
 
-onDPad(key => document.onkeydown({
-    key: key,
-    preventDefault: () => {},
-}));
+onDPad(document.querySelector('#dpad'), dir => {
+    var keys = {
+        'up': 'ArrowUp',
+        'right': 'ArrowRight',
+        'down': 'ArrowDown',
+        'left': 'ArrowLeft',
+    };
+    document.onkeydown({
+        key: keys[dir],
+        preventDefault: () => {},
+    });
+});
+
+onDPad(document.querySelector('#buttons'), dir => {
+    var keys = {
+        'up': null,
+        'right': 'e',
+        'down': null,
+        'left': 'q',
+    };
+    document.onkeydown({
+        key: keys[dir],
+        preventDefault: () => {},
+    });
+});
 
 screen.updateSize();
 window.addEventListener('resize', () => screen.updateSize(), {passive: true});

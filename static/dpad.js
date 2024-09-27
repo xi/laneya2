@@ -1,22 +1,21 @@
-export default function(handler) {
-    var $dpad = document.querySelector('#dpad');
+export default function(el, handler) {
     var pointer = null;
 
     var click = function() {
-        var rect = $dpad.getBoundingClientRect();
+        var rect = el.getBoundingClientRect();
         var x = (pointer.x - rect.x) / rect.width - 0.5;
         var y = (pointer.y - rect.y) / rect.height - 0.5;
         if (Math.abs(x) > Math.abs(y)) {
-            handler(x > 0 ? 'ArrowRight' : 'ArrowLeft');
+            handler(x > 0 ? 'right' : 'left');
         } else {
-            handler(y > 0 ? 'ArrowDown' : 'ArrowUp');
+            handler(y > 0 ? 'down' : 'up');
         }
     };
 
-    $dpad.addEventListener('pointerdown', event => {
+    el.addEventListener('pointerdown', event => {
         if (!pointer && (event.buttons & 1 || event.pointerType !== 'mouse')) {
             event.preventDefault();
-            $dpad.setPointerCapture(event.pointerId);
+            el.setPointerCapture(event.pointerId);
             pointer = {
                 id: event.pointerId,
                 x: event.clientX,
@@ -32,7 +31,7 @@ export default function(handler) {
         }
     });
 
-    $dpad.addEventListener('pointermove', event => {
+    el.addEventListener('pointermove', event => {
         if (pointer && event.pointerId === pointer.id) {
             event.preventDefault();
             pointer.x = event.clientX;
@@ -47,6 +46,6 @@ export default function(handler) {
         }
     };
 
-    $dpad.addEventListener('pointerup', pointerup);
-    $dpad.addEventListener('pointercancel', pointerup);
+    el.addEventListener('pointerup', pointerup);
+    el.addEventListener('pointercancel', pointerup);
 }

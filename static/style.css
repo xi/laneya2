@@ -16,22 +16,35 @@ pre {
 	margin: 0;
 }
 
-#dpad {
+.controls {
 	position: fixed;
-	inset-block-end: 1em;
-	inset-inline-start: 1em;
-	inline-size: 10em;
+	inset-block-end: 0;
+	inline-size: 12em;
 	max-inline-size: 30%;
 	opacity: 0.3;
 	touch-action: manipulation;
+	cursor: pointer;
 }
-#dpad circle {
+.controls circle {
 	fill: var(--fg);
 }
-#dpad path {
+.controls path {
 	fill: none;
 	stroke: var(--bg);
 	stroke-width: 2;
+}
+.controls text {
+	font-family: sans-serif;
+	font-weight: bold;
+	font-size: 16px;
+	dominant-baseline: middle;
+	text-anchor: middle;
+}
+#dpad {
+	inset-inline-start: 0;
+}
+#buttons {
+	inset-inline-end: 0;
 }
 
 .color-0 { color: #999 }
@@ -62,7 +75,7 @@ pre {
 	.color-6 { color: #0dd }
 	.color-7 { color: #999 }
 
-	#dpad {
+	.controls {
 		opacity: 0.1;
 	}
 }
