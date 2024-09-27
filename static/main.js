@@ -8,8 +8,6 @@ var gameId = params.get('game');
 
 var socketProtocol = location.protocol.replace('http', 'ws');
 var socket = new WebSocket(`${socketProtocol}//${location.host}/ws/${gameId}`);
-var rows = null;
-var cols = null;
 
 var send = function(data) {
     socket.send(JSON.stringify(data));
@@ -45,17 +43,6 @@ var binSearch = function(key) {
         }
     }
     return v1;
-};
-
-var updateSize = function() {
-    rows = binSearch(v => {
-        $pre.textContent = '\n'.repeat(v);
-        return document.documentElement.scrollHeight - document.documentElement.clientHeight;
-    });
-    cols = binSearch(v => {
-        $pre.textContent = ' '.repeat(v);
-        return document.body.scrollWidth - document.body.clientWidth;
-    });
 };
 
 var game = {
@@ -170,21 +157,27 @@ var game = {
     },
 };
 
-var render = function() {
-    if (!rows || !cols) {
-        updateSize();
-    }
+var screen = {
+    rows: null,
+    cols: null,
 
-    var xOffset = -(cols >> 1);
-    var yOffset = -(rows >> 1);
-    if (game.objects[game.id]) {
-        xOffset += game.objects[game.id].pos.x;
-        yOffset += game.objects[game.id].pos.y;
-    }
+    updateSize() {
+        this.rows = binSearch(v => {
+            $pre.textContent = '\n'.repeat(v);
+            return document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        });
+        this.cols = binSearch(v => {
+            $pre.textContent = ' '.repeat(v);
+            return document.body.scrollWidth - document.body.clientWidth;
+        });
+    },
 
-    $pre.innerHTML = '';
+    invalidateSize() {
+        this.rows = null;
+        this.cols = null;
+    },
 
-    var commitSpan = (text, color) => {
+    commitSpan(text, color) {
         if (color === -1) {
             $pre.append(text);
         } else {
@@ -193,31 +186,53 @@ var render = function() {
             $span.className = `color-${color}`;
             $pre.append($span);
         }
-    };
+    },
 
-    var health = Math.round(game.health / game.healthTotal * cols);
-    commitSpan('='.repeat(health), 1);
-    commitSpan('='.repeat(cols - health), 0);
-    $pre.append('\n');
+    renderHealth() {
+        var health = Math.round(game.health / game.healthTotal * this.cols);
+        this.commitSpan('='.repeat(health), 1);
+        this.commitSpan('='.repeat(this.cols - health), 0);
+        $pre.append('\n');
+    },
 
-    for (let y = 1; y < rows; y++) {
-        var span = '';
-        var spanColor = -1;
-
-        for (let x = 0; x < cols; x++) {
-            const [c, color] = game.getChar(xOffset + x, yOffset + y);
-            if (color === spanColor) {
-                span += c;
-            } else {
-                commitSpan(span, spanColor);
-                span = c;
-                spanColor = color;
-            }
+    renderMap() {
+        var xOffset = -(this.cols >> 1);
+        var yOffset = -(this.rows >> 1);
+        if (game.objects[game.id]) {
+            xOffset += game.objects[game.id].pos.x;
+            yOffset += game.objects[game.id].pos.y;
         }
 
-        commitSpan(span, spanColor);
-        $pre.append('\n');
-    }
+        for (let y = 1; y < this.rows; y++) {
+            let span = '';
+            let spanColor = -1;
+
+            for (let x = 0; x < this.cols; x++) {
+                const [c, color] = game.getChar(xOffset + x, yOffset + y);
+                if (color === spanColor) {
+                    span += c;
+                } else {
+                    this.commitSpan(span, spanColor);
+                    span = c;
+                    spanColor = color;
+                }
+            }
+
+            this.commitSpan(span, spanColor);
+            $pre.append('\n');
+        }
+    },
+
+    render() {
+        if (!this.rows || !this.cols) {
+            this.updateSize();
+        }
+
+        $pre.innerHTML = '';
+
+        this.renderHealth();
+        this.renderMap();
+    },
 };
 
 socket.onclose = function() {
@@ -261,7 +276,7 @@ socket.onmessage = function(event) {
             console.log(msg);
         }
     }
-    render();
+    screen.render();
 };
 
 document.onkeydown = function(event) {
@@ -281,7 +296,4 @@ document.onkeydown = function(event) {
 
 onDPad(dir => send({action: 'move', dir: dir}));
 
-window.addEventListener('resize', () => {
-    rows = null;
-    cols = null;
-});
+window.addEventListener('resize', () => screen.invalidateSize());
