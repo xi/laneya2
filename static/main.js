@@ -1,5 +1,6 @@
+import onDPad from './dpad.js';
+
 var $pre = document.querySelector('pre');
-var $dpad = document.querySelector('#dpad');
 var radius = 5;
 
 var params = new URLSearchParams(location.search);
@@ -7,7 +8,6 @@ var gameId = params.get('game');
 
 var socketProtocol = location.protocol.replace('http', 'ws');
 var socket = new WebSocket(`${socketProtocol}//${location.host}/ws/${gameId}`);
-var pointer = null;
 var rows = null;
 var cols = null;
 
@@ -279,53 +279,7 @@ document.onkeydown = function(event) {
     event.preventDefault();
 };
 
-var click = function() {
-    var rect = $dpad.getBoundingClientRect();
-    var x = (pointer.x - rect.x) / rect.width - 0.5;
-    var y = (pointer.y - rect.y) / rect.height - 0.5;
-    if (Math.abs(x) > Math.abs(y)) {
-        send({action: 'move', dir: x > 0 ? 'right' : 'left'});
-    } else {
-        send({action: 'move', dir: y > 0 ? 'down' : 'up'});
-    }
-};
-
-$dpad.addEventListener('pointerdown', event => {
-    if (!pointer && (event.buttons & 1 || event.pointerType !== 'mouse')) {
-        event.preventDefault();
-        $dpad.setPointerCapture(event.pointerId);
-        pointer = {
-            id: event.pointerId,
-            x: event.clientX,
-            y: event.clientY,
-            timeout: setTimeout(() => {
-                click();
-                pointer.timeout = setInterval(() => {
-                    click();
-                }, 40);
-            }, 200),
-        };
-        click();
-    }
-});
-
-$dpad.addEventListener('pointermove', event => {
-    if (pointer && event.pointerId === pointer.id) {
-        event.preventDefault();
-        pointer.x = event.clientX;
-        pointer.y = event.clientY;
-    }
-});
-
-var pointerup = function(event) {
-    if (pointer && event.pointerId === pointer.id) {
-        clearTimeout(pointer.timeout);
-        pointer = null;
-    }
-};
-
-$dpad.addEventListener('pointerup', pointerup);
-$dpad.addEventListener('pointercancel', pointerup);
+onDPad(dir => send({action: 'move', dir: dir}));
 
 window.addEventListener('resize', () => {
     rows = null;
