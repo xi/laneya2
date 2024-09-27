@@ -229,6 +229,24 @@ func (game *Game) MaybeNextLevel() {
 	game.broadcast(msgs)
 }
 
+func (game *Game) getMonsterAt(pos Point) *Monster {
+	for monster := range game.Monsters {
+		if monster.Pos == pos {
+			return monster
+		}
+	}
+	return nil
+}
+
+func (game *Game) getPlayerAt(pos Point) *Player {
+	for player := range game.Players {
+		if player.Pos == pos {
+			return player
+		}
+	}
+	return nil
+}
+
 func (game *Game) run() {
 	for {
 		select {
@@ -313,7 +331,10 @@ func (game *Game) run() {
 					continue
 				}
 				pos := player.Pos.Move(dir)
-				if game.IsFree(pos) {
+				monster := game.getMonsterAt(pos)
+				if monster != nil {
+					// TODO
+				} else if game.IsFree(pos) {
 					player.Pos = pos
 					game.broadcast([]Message{
 						Message{
@@ -343,7 +364,10 @@ func (game *Game) run() {
 				} else if msg["dir"] == "left" {
 					pos.X -= 1
 				}
-				if game.IsFree(pos) {
+				player := game.getPlayerAt(pos)
+				if player != nil {
+					// TODO
+				} else if game.getMonsterAt(pos) == nil && game.IsFree(pos) {
 					monster.Pos = pos
 					game.broadcast([]Message{
 						Message{
