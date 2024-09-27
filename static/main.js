@@ -52,10 +52,7 @@ var game = {
     objects: {},
     health: 1,
     healthTotal: 1,
-    inventory: {
-        'potion': 1,
-        'dagger': 1,
-    },
+    inventory: {},
 
     getRect(pos, withWalls) {
         for (const rect of this.rects) {
@@ -167,6 +164,7 @@ var screen = {
     menuOpen: false,
     menuCursor: 0,
     menuOffset: 0,
+    menuSelected: null,
 
     updateSize() {
         this.rows = binSearch(v => {
@@ -227,6 +225,8 @@ var screen = {
         if (this.menuOffset > this.menuCursor) {
             this.menuOffset = this.menuCursor;
         }
+
+        this.menuSelected = items.length ? items[this.menuCursor][0] : null;
 
         for (let i = 0; i < rows; i++) {
             if (i + this.menuOffset < items.length) {
@@ -317,6 +317,16 @@ socket.onmessage = function(event) {
             game.healthTotal = msg.healthTotal;
         } else if (msg.action === 'remove') {
             delete game.objects[msg.id];
+        } else if (msg.action === 'addItem') {
+            game.inventory[msg.item] = game.inventory[msg.item] || 0;
+            game.inventory[msg.item] += msg.amount;
+        } else if (msg.action === 'removeItem') {
+            if (msg.item in game.inventory) {
+                game.inventory[msg.item] -= msg.amount;
+                if (game.inventory[msg.item] <= 0) {
+                    delete game.inventory[msg.item];
+                }
+            }
         } else {
             console.log(msg);
         }
@@ -331,11 +341,15 @@ document.onkeydown = function(event) {
         } else if (event.key === 'ArrowDown' || event.key === 's') {
             screen.menuCursor += 1;
         } else if (event.key === 'ArrowRight' || event.key === 'd') {
-            // TODO: drop
+            if (screen.menuSelected) {
+                send({action: 'drop', item: screen.menuSelected});
+            }
         } else if (event.key === 'q') {
             screen.toggleMenu();
         } else if (event.key === 'Enter' || event.key === 'e') {
-            // TODO: use
+            if (screen.menuSelected) {
+                send({action: 'use', item: screen.menuSelected});
+            }
         } else {
             return;
         }
@@ -352,7 +366,7 @@ document.onkeydown = function(event) {
         } else if (event.key === 'q') {
             screen.toggleMenu();
         } else if (event.key === 'Enter' || event.key === 'e') {
-            // TODO: pick up
+            send({action: 'pickup'});
         } else {
             return;
         }
