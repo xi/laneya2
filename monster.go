@@ -51,7 +51,10 @@ func (monster *Monster) run() {
 				}
 			}
 
-			if bestDist > 10 || !monster.Game.IsFree(monster.Pos.Move(dir)) {
+			if bestDist > 10 {
+				continue
+			}
+			if !monster.Game.IsFree(monster.Pos.Move(dir)) {
 				dir = RandomDir()
 			}
 
