@@ -3,44 +3,9 @@ package main
 import (
 	"log"
 	"sync"
-	"time"
-
-	"github.com/gorilla/websocket"
 )
 
 type Message map[string]interface{}
-
-type Player struct {
-	Game        *Game
-	Send        chan []Message
-	conn        *websocket.Conn
-	alive       bool
-	Id          int
-	Pos         Point
-	Speed       float32
-	Health      int
-	HealthTotal int
-}
-
-type Monster struct {
-	Game   *Game
-	quit   chan bool
-	Id     int
-	Rune   rune
-	Pos    Point
-	Speed  float32
-	Health int
-}
-
-type PlayerMessage struct {
-	Player *Player
-	Msg    Message
-}
-
-type MonsterMessage struct {
-	Monster *Monster
-	Msg     Message
-}
 
 type Game struct {
 	Id         string
@@ -91,41 +56,6 @@ func getGame(id string) *Game {
 	return game
 }
 
-func (monster *Monster) run() {
-	timeout := time.Duration(float32(time.Second) / monster.Speed)
-	ticker := time.NewTicker(timeout)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-monster.quit:
-			return
-		case <-ticker.C:
-			bestDist := 100000
-			dir := "left"
-			for player := range monster.Game.Players {
-				dist := monster.Pos.Dist(player.Pos)
-				if dist < bestDist {
-					bestDist = dist
-					dir = monster.Pos.Dir(player.Pos)
-				}
-			}
-
-			if bestDist > 10 || !monster.Game.IsFree(monster.Pos.Move(dir)) {
-				dir = RandomDir()
-			}
-
-			monster.Game.MMsg <- MonsterMessage{
-				monster,
-				Message{
-					"action": "move",
-					"dir":    dir,
-				},
-			}
-		}
-	}
-}
-
 func (game *Game) broadcast(msgs []Message) {
 	for player, _ := range game.Players {
 		player.Send <- msgs
@@ -159,17 +89,8 @@ func (game *Game) generateMap() {
 			lines = append(lines, makeRect(p1.X, p1.Y, p2.X, p1.Y))
 			lines = append(lines, makeRect(p2.X, p1.Y, p2.X, p2.Y))
 
-			monster := Monster{
-				Game:   game,
-				quit:   make(chan bool),
-				Id:     game.createId(),
-				Rune:   'm',
-				Pos:    rect.RandomPoint(),
-				Speed:  2,
-				Health: 10,
-			}
-			game.Monsters[&monster] = true
-			go monster.run()
+			monster := makeMonster(game, rect.RandomPoint())
+			game.Monsters[monster] = true
 
 			prev = rect
 		}
@@ -330,22 +251,7 @@ func (game *Game) run() {
 				if !ok {
 					continue
 				}
-				pos := player.Pos.Move(dir)
-				monster := game.getMonsterAt(pos)
-				if monster != nil {
-					// TODO
-				} else if game.IsFree(pos) {
-					player.Pos = pos
-					game.broadcast([]Message{
-						Message{
-							"action": "setPosition",
-							"id":     player.Id,
-							"pos":    player.Pos,
-						},
-					})
-
-					game.MaybeNextLevel()
-				}
+				player.Move(dir)
 			} else if verbose {
 				log.Println("unknown action", msg)
 			}
@@ -354,29 +260,11 @@ func (game *Game) run() {
 			msg := mmsg.Msg
 
 			if msg["action"] == "move" {
-				pos := monster.Pos
-				if msg["dir"] == "up" {
-					pos.Y -= 1
-				} else if msg["dir"] == "right" {
-					pos.X += 1
-				} else if msg["dir"] == "down" {
-					pos.Y += 1
-				} else if msg["dir"] == "left" {
-					pos.X -= 1
+				dir, ok := msg["dir"].(string)
+				if !ok {
+					continue
 				}
-				player := game.getPlayerAt(pos)
-				if player != nil {
-					// TODO
-				} else if game.getMonsterAt(pos) == nil && game.IsFree(pos) {
-					monster.Pos = pos
-					game.broadcast([]Message{
-						Message{
-							"action": "setPosition",
-							"id":     monster.Id,
-							"pos":    monster.Pos,
-						},
-					})
-				}
+				monster.Move(dir)
 			}
 		}
 	}
