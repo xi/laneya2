@@ -10,8 +10,8 @@ type Player struct {
 	Id          int
 	Pos         Point
 	Speed       float32
-	Health      int
-	HealthTotal int
+	Health      uint
+	HealthTotal uint
 }
 
 type PlayerMessage struct {
@@ -39,7 +39,8 @@ func (player *Player) Move(dir string) {
 	}
 }
 
-func (player *Player) TakeDamage(amount int) {
+func (player *Player) TakeDamage(amount uint) {
+	// TODO: death if amount >= player.Health
 	player.Health -= amount
 	player.Game.broadcast([]Message{
 		Message{
