@@ -42,11 +42,11 @@ func (player *Player) Move(dir string) {
 func (player *Player) TakeDamage(amount uint) {
 	// TODO: death if amount >= player.Health
 	player.Health -= amount
-	player.Game.broadcast([]Message{
+	player.Send <- []Message{
 		Message{
 			"action":      "setHealth",
 			"health":      player.Health,
 			"healthTotal": player.HealthTotal,
 		},
-	})
+	}
 }
