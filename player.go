@@ -12,6 +12,7 @@ type Player struct {
 	Speed       float32
 	Health      uint
 	HealthTotal uint
+	Inventory   map[string]uint
 }
 
 type PlayerMessage struct {
@@ -48,5 +49,70 @@ func (player *Player) TakeDamage(amount uint) {
 			"health":      player.Health,
 			"healthTotal": player.HealthTotal,
 		},
+	}
+}
+
+func (player *Player) Heal(amount uint) {
+	// TODO: death if amount >= player.Health
+	player.Health += amount
+	if player.Health > player.HealthTotal {
+		player.Health = player.HealthTotal
+	}
+	player.Send <- []Message{
+		Message{
+			"action":      "setHealth",
+			"health":      player.Health,
+			"healthTotal": player.HealthTotal,
+		},
+	}
+}
+
+func (player *Player) AddItem(item string, amount uint) {
+	value, ok := player.Inventory[item]
+	if ok {
+		value += amount
+	} else {
+		value = amount
+	}
+	player.Inventory[item] = value
+
+	player.Send <- []Message{
+		Message{
+			"action": "setInventory",
+			"item":   item,
+			"amount": value,
+		},
+	}
+}
+
+func (player *Player) RemoveItem(item string, amount uint) {
+	value, ok := player.Inventory[item]
+	if !ok {
+		value = 0
+	} else if value <= amount {
+		delete(player.Inventory, item)
+		value = 0
+	} else {
+		value -= amount
+		player.Inventory[item] = value
+	}
+
+	player.Send <- []Message{
+		Message{
+			"action": "setInventory",
+			"item":   item,
+			"amount": value,
+		},
+	}
+}
+
+func (player *Player) UseItem(item string) {
+	// TODO: send result in a single transaction
+	// TODO: check if item is in inventory
+	if item == "potion" {
+		if player.Health < player.HealthTotal {
+			player.RemoveItem(item, 1)
+			player.Heal(10)
+		}
 	}
 }

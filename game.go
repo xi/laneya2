@@ -252,6 +252,22 @@ func (game *Game) run() {
 					continue
 				}
 				player.Move(dir)
+			} else if msg["action"] == "pickup" {
+				// TODO only if there is loot on player.Pos
+				player.AddItem("potion", 1)
+			} else if msg["action"] == "drop" {
+				item, ok := msg["item"].(string)
+				if !ok {
+					continue
+				}
+				// TODO: add to loot pile
+				player.RemoveItem(item, 1)
+			} else if msg["action"] == "use" {
+				item, ok := msg["item"].(string)
+				if !ok {
+					continue
+				}
+				player.UseItem(item)
 			} else if verbose {
 				log.Println("unknown action", msg)
 			}

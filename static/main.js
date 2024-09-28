@@ -317,15 +317,11 @@ socket.onmessage = function(event) {
             game.healthTotal = msg.healthTotal;
         } else if (msg.action === 'remove') {
             delete game.objects[msg.id];
-        } else if (msg.action === 'addItem') {
-            game.inventory[msg.item] = game.inventory[msg.item] || 0;
-            game.inventory[msg.item] += msg.amount;
-        } else if (msg.action === 'removeItem') {
-            if (msg.item in game.inventory) {
-                game.inventory[msg.item] -= msg.amount;
-                if (game.inventory[msg.item] <= 0) {
-                    delete game.inventory[msg.item];
-                }
+        } else if (msg.action === 'setInventory') {
+            if (msg.amount) {
+                game.inventory[msg.item] = msg.amount;
+            } else {
+                delete game.inventory[msg.item];
             }
         } else {
             console.log(msg);

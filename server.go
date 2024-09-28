@@ -103,6 +103,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		Speed:       20,
 		Health:      100,
 		HealthTotal: 100,
+		Inventory:   make(map[string]uint),
 	}
 	conn.SetPongHandler(func(string) error {
 		player.alive = true
