@@ -92,6 +92,7 @@ func (monster *Monster) TakeDamage(amount int) {
 	if monster.Health <= 0 {
 		monster.quit <- true
 		delete(monster.Game.Monsters, monster)
+		monster.Game.addToPile(monster.Pos, "potion")
 		monster.Game.broadcast([]Message{
 			Message{
 				"action": "remove",

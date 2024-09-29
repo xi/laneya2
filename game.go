@@ -7,10 +7,16 @@ import (
 
 type Message map[string]interface{}
 
+type Pile struct {
+	Id    int
+	Items map[string]uint
+}
+
 type Game struct {
 	Id         string
 	Players    map[*Player]bool
 	Monsters   map[*Monster]bool
+	Piles      map[Point]*Pile
 	Msg        chan PlayerMessage
 	MMsg       chan MonsterMessage
 	register   chan *Player
@@ -39,6 +45,7 @@ func getGame(id string) *Game {
 			Id:         id,
 			Players:    make(map[*Player]bool),
 			Monsters:   make(map[*Monster]bool),
+			Piles:      make(map[Point]*Pile),
 			Msg:        make(chan PlayerMessage),
 			MMsg:       make(chan MonsterMessage),
 			register:   make(chan *Player),
@@ -71,6 +78,10 @@ func (game *Game) generateMap() {
 	for monster := range game.Monsters {
 		monster.quit <- true
 		delete(game.Monsters, monster)
+	}
+
+	for pos := range game.Piles {
+		delete(game.Piles, pos)
 	}
 
 	prev := Rect{-3, -3, 3, 3}
@@ -168,6 +179,33 @@ func (game *Game) getPlayerAt(pos Point) *Player {
 	return nil
 }
 
+func (game *Game) addToPile(pos Point, item string) {
+	pile, ok := game.Piles[pos]
+	if !ok {
+		pile = &Pile{
+			Id:    game.createId(),
+			Items: make(map[string]uint),
+		}
+		game.Piles[pos] = pile
+	}
+
+	value, ok := pile.Items[item]
+	if ok {
+		pile.Items[item] = value + 1
+	} else {
+		pile.Items[item] = 1
+		game.broadcast([]Message{
+			Message{
+				"action": "create",
+				"type":   "pile",
+				"id":     pile.Id,
+				"rune":   "%",
+				"pos":    pos,
+			},
+		})
+	}
+}
+
 func (game *Game) run() {
 	for {
 		select {
@@ -198,6 +236,15 @@ func (game *Game) run() {
 					"rune":   string(monster.Rune),
 					"id":     monster.Id,
 					"pos":    monster.Pos,
+				})
+			}
+			for pos, pile := range game.Piles {
+				setup = append(setup, Message{
+					"action": "create",
+					"type":   "pile",
+					"rune":   "%",
+					"id":     pile.Id,
+					"pos":    pos,
 				})
 			}
 			for p := range game.Players {
@@ -253,15 +300,26 @@ func (game *Game) run() {
 				}
 				player.Move(dir)
 			} else if msg["action"] == "pickup" {
-				// TODO only if there is loot on player.Pos
-				player.AddItem("potion", 1)
+				pile, ok := game.Piles[player.Pos]
+				if ok {
+					delete(game.Piles, player.Pos)
+					for item, amount := range pile.Items {
+						player.AddItem(item, amount)
+					}
+					game.broadcast([]Message{
+						Message{
+							"action": "remove",
+							"id":     pile.Id,
+						},
+					})
+				}
 			} else if msg["action"] == "drop" {
 				item, ok := msg["item"].(string)
 				if !ok {
 					continue
 				}
-				// TODO: add to loot pile
 				player.RemoveItem(item, 1)
+				game.addToPile(player.Pos, item)
 			} else if msg["action"] == "use" {
 				item, ok := msg["item"].(string)
 				if !ok {

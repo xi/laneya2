@@ -16,6 +16,7 @@ var send = function(data) {
 var COLORS = {
     'player': 4,
     'monster': 1,
+    'pile': 3,
 };
 
 var inRect = function(pos, rect, withWalls) {
