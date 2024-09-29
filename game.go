@@ -181,7 +181,7 @@ func (game *Game) getPlayerAt(pos Point) *Player {
 	return nil
 }
 
-func (game *Game) addToPile(pos Point, item string) {
+func (game *Game) addToPile(pos Point, item string, amount uint) {
 	pile, ok := game.Piles[pos]
 	if !ok {
 		pile = &Pile{
@@ -193,9 +193,9 @@ func (game *Game) addToPile(pos Point, item string) {
 
 	value, ok := pile.Items[item]
 	if ok {
-		pile.Items[item] = value + 1
+		pile.Items[item] = value + amount
 	} else {
-		pile.Items[item] = 1
+		pile.Items[item] = amount
 		game.Enqueue(Message{
 			"action": "create",
 			"type":   "pile",
@@ -281,6 +281,9 @@ func (game *Game) run() {
 					"action": "remove",
 					"id":     player.Id,
 				})
+				for item, amount := range player.Inventory {
+					game.addToPile(player.Pos, item, amount)
+				}
 			}
 		case pmsg := <-game.Msg:
 			if pmsg.Msg["action"] == "move" {

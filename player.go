@@ -132,7 +132,7 @@ func (player *Player) PickupItems() {
 
 func (player *Player) DropItem(item string) {
 	if player.RemoveItem(item, 1) {
-		player.Game.addToPile(player.Pos, item)
+		player.Game.addToPile(player.Pos, item, 1)
 	}
 }
 
