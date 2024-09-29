@@ -66,6 +66,8 @@ func (player *Player) writePump() {
 				}
 				return
 			}
+		case <-player.quit:
+			return
 		case <-ticker.C:
 			if !player.alive {
 				return
@@ -95,6 +97,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 
 	player := &Player{
 		Game:        game,
+		quit:        make(chan bool),
 		send:        make(chan []Message),
 		queue:       []Message{},
 		conn:        conn,

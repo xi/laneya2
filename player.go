@@ -4,6 +4,7 @@ import "github.com/gorilla/websocket"
 
 type Player struct {
 	Game        *Game
+	quit        chan bool
 	send        chan []Message
 	queue       []Message
 	conn        *websocket.Conn
@@ -33,13 +34,16 @@ func (player *Player) Flush() {
 }
 
 func (player *Player) TakeDamage(amount uint) {
-	// TODO: death if amount >= player.Health
-	player.Health -= amount
-	player.Enqueue(Message{
-		"action":      "setHealth",
-		"health":      player.Health,
-		"healthTotal": player.HealthTotal,
-	})
+	if amount > player.Health {
+		player.quit <- true
+	} else {
+		player.Health -= amount
+		player.Enqueue(Message{
+			"action":      "setHealth",
+			"health":      player.Health,
+			"healthTotal": player.HealthTotal,
+		})
+	}
 }
 
 func (player *Player) Heal(amount uint) {
