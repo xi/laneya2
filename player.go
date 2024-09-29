@@ -11,9 +11,12 @@ type Player struct {
 	alive       bool
 	Id          int
 	Pos         Point
-	Speed       float32
 	Health      uint
 	HealthTotal uint
+	Attack      uint
+	Defense     uint
+	LineOfSight uint
+	Speed       uint
 	Inventory   map[string]uint
 }
 
@@ -39,9 +42,9 @@ func (player *Player) TakeDamage(amount uint) {
 	} else {
 		player.Health -= amount
 		player.Enqueue(Message{
-			"action":      "setHealth",
-			"health":      player.Health,
-			"healthTotal": player.HealthTotal,
+			"action": "setStat",
+			"stat":   "health",
+			"value":  player.Health,
 		})
 	}
 }
@@ -52,9 +55,9 @@ func (player *Player) Heal(amount uint) {
 		player.Health = player.HealthTotal
 	}
 	player.Enqueue(Message{
-		"action":      "setHealth",
-		"health":      player.Health,
-		"healthTotal": player.HealthTotal,
+		"action": "setStat",
+		"stat":   "health",
+		"value":  player.Health,
 	})
 }
 
@@ -102,7 +105,7 @@ func (player *Player) Move(dir string) {
 	pos := player.Pos.Move(dir)
 	monster := game.getMonsterAt(pos)
 	if monster != nil {
-		monster.TakeDamage(5)
+		monster.TakeDamage(player.Attack)
 	} else if game.IsFree(pos) {
 		player.Pos = pos
 		game.Enqueue(Message{

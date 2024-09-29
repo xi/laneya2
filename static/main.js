@@ -1,7 +1,6 @@
 import onDPad from './dpad.js';
 
 var $pre = document.querySelector('pre');
-var radius = 5;
 
 var params = new URLSearchParams(location.search);
 var gameId = params.get('game');
@@ -51,8 +50,14 @@ var game = {
     rects: [],
     seen: {},
     objects: {},
-    health: 1,
-    healthTotal: 1,
+    stats: {
+        health: 1,
+        healthTotal: 1,
+        attack: 0,
+        defense: 0,
+        speed: 0,
+        lineOfSight: 0,
+    },
     inventory: {},
 
     getRect(pos, withWalls) {
@@ -67,7 +72,8 @@ var game = {
         // check radius
         var dx = a.x - b.x;
         var dy = a.y - b.y;
-        if (dx * dx + dy * dy >= radius * radius) {
+        var r = this.stats.lineOfSight;
+        if (dx * dx + dy * dy >= r * r) {
             return false;
         }
 
@@ -147,9 +153,10 @@ var game = {
     },
 
     updateSeen(pos) {
-        for (let dy = -radius; dy <= radius; dy++) {
+        var r = this.stats.lineOfSight;
+        for (let dy = -r; dy <= r; dy++) {
             const y = pos.y + dy;
-            for (let dx = -radius; dx <= radius; dx++) {
+            for (let dx = -r; dx <= r; dx++) {
                 const x = pos.x + dx;
                 if (!this.seen[[x, y]] && this.inView(pos, {x, y})) {
                     this.seen[[x, y]] = true;
@@ -202,7 +209,7 @@ var screen = {
     },
 
     renderHealth() {
-        var health = Math.round(game.health / game.healthTotal * this.cols);
+        var health = Math.round(game.stats.health / game.stats.healthTotal * this.cols);
         this.commitSpan('='.repeat(health), 1);
         this.commitSpan('='.repeat(this.cols - health), 0);
         $pre.append('\n');
@@ -313,9 +320,8 @@ socket.onmessage = function(event) {
             if (game.objects[msg.id].type === 'player') {
                 game.updateSeen(msg.pos);
             }
-        } else if (msg.action === 'setHealth') {
-            game.health = msg.health;
-            game.healthTotal = msg.healthTotal;
+        } else if (msg.action === 'setStat') {
+            game.stats[msg.stat] = msg.value;
         } else if (msg.action === 'remove') {
             delete game.objects[msg.id];
         } else if (msg.action === 'setInventory') {

@@ -218,9 +218,34 @@ func (game *Game) run() {
 				"id":     player.Id,
 			})
 			player.Enqueue(Message{
-				"action":      "setHealth",
-				"health":      player.Health,
-				"healthTotal": player.HealthTotal,
+				"action": "setStat",
+				"stat":   "health",
+				"value":  player.Health,
+			})
+			player.Enqueue(Message{
+				"action": "setStat",
+				"stat":   "healthTotal",
+				"value":  player.HealthTotal,
+			})
+			player.Enqueue(Message{
+				"action": "setStat",
+				"stat":   "attack",
+				"value":  player.Attack,
+			})
+			player.Enqueue(Message{
+				"action": "setStat",
+				"stat":   "defense",
+				"value":  player.Defense,
+			})
+			player.Enqueue(Message{
+				"action": "setStat",
+				"stat":   "lineOfSight",
+				"value":  player.LineOfSight,
+			})
+			player.Enqueue(Message{
+				"action": "setStat",
+				"stat":   "speed",
+				"value":  player.Speed,
 			})
 			player.Enqueue(Message{
 				"action": "setLevel",

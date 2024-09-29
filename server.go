@@ -42,7 +42,7 @@ func (player *Player) readPump() {
 		if timer != nil {
 			timer.Stop()
 		}
-		timeout := time.Duration(float32(time.Second) / player.Speed)
+		timeout := time.Duration(float32(time.Second) / float32(player.Speed))
 		timer = time.AfterFunc(time.Until(lastTime.Add(timeout)), func() {
 			lastTime = time.Now()
 			player.Game.Msg <- PlayerMessage{player, msg}
@@ -104,9 +104,12 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		alive:       true,
 		Id:          game.createId(),
 		Pos:         Point{0, 0},
-		Speed:       20,
 		Health:      100,
 		HealthTotal: 100,
+		Attack:      5,
+		Defense:     0,
+		LineOfSight: 5,
+		Speed:       20,
 		Inventory:   make(map[string]uint),
 	}
 	conn.SetPongHandler(func(string) error {

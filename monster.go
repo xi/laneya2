@@ -3,13 +3,15 @@ package main
 import "time"
 
 type Monster struct {
-	Game   *Game
-	quit   chan bool
-	Id     int
-	Rune   rune
-	Pos    Point
-	Speed  float32
-	Health int
+	Game    *Game
+	quit    chan bool
+	Id      int
+	Rune    rune
+	Pos     Point
+	Health  uint
+	Attack  uint
+	Defense uint
+	Speed   uint
 }
 
 type MonsterMessage struct {
@@ -19,20 +21,22 @@ type MonsterMessage struct {
 
 func makeMonster(game *Game, pos Point) *Monster {
 	monster := &Monster{
-		Game:   game,
-		quit:   make(chan bool),
-		Id:     game.createId(),
-		Rune:   'm',
-		Pos:    pos,
-		Speed:  2,
-		Health: 10,
+		Game:    game,
+		quit:    make(chan bool),
+		Id:      game.createId(),
+		Rune:    'm',
+		Pos:     pos,
+		Speed:   2,
+		Attack:  2,
+		Defense: 0,
+		Health:  10,
 	}
 	go monster.run()
 	return monster
 }
 
 func (monster *Monster) run() {
-	timeout := time.Duration(float32(time.Second) / monster.Speed)
+	timeout := time.Duration(float32(time.Second) / float32(monster.Speed))
 	ticker := time.NewTicker(timeout)
 	defer ticker.Stop()
 
@@ -69,9 +73,8 @@ func (monster *Monster) run() {
 	}
 }
 
-func (monster *Monster) TakeDamage(amount int) {
-	monster.Health -= amount
-	if monster.Health <= 0 {
+func (monster *Monster) TakeDamage(amount uint) {
+	if amount > monster.Health {
 		monster.quit <- true
 		delete(monster.Game.Monsters, monster)
 		monster.Game.addToPile(monster.Pos, "potion", 1)
@@ -79,6 +82,8 @@ func (monster *Monster) TakeDamage(amount int) {
 			"action": "remove",
 			"id":     monster.Id,
 		})
+	} else {
+		monster.Health -= amount
 	}
 }
 
@@ -87,7 +92,7 @@ func (monster *Monster) Move(dir string) {
 	pos := monster.Pos.Move(dir)
 	player := game.getPlayerAt(pos)
 	if player != nil {
-		player.TakeDamage(2)
+		player.TakeDamage(monster.Attack)
 	} else if game.getMonsterAt(pos) == nil && game.IsFree(pos) {
 		monster.Pos = pos
 		game.Enqueue(Message{
