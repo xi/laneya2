@@ -77,18 +77,18 @@ func (player *Player) AddItem(item string, amount uint) {
 	})
 }
 
-func (player *Player) RemoveItem(item string, amount uint) bool {
+func (player *Player) RemoveItem(item string) bool {
 	value, ok := player.Inventory[item]
-	success := false
+	success := true
 	if !ok {
 		value = 0
-	} else if value <= amount {
-		delete(player.Inventory, item)
-		value = 0
-	} else {
-		value -= amount
+		success = false
+	} else if value > 1 {
+		value -= 1
 		player.Inventory[item] = value
-		success = true
+	} else {
+		value = 0
+		delete(player.Inventory, item)
 	}
 
 	player.Enqueue(Message{
@@ -134,7 +134,7 @@ func (player *Player) PickupItems() {
 }
 
 func (player *Player) DropItem(item string) {
-	if player.RemoveItem(item, 1) {
+	if player.RemoveItem(item) {
 		player.Game.addToPile(player.Pos, item, 1)
 	}
 }
@@ -142,7 +142,7 @@ func (player *Player) DropItem(item string) {
 func (player *Player) UseItem(item string) {
 	if item == "potion" {
 		if player.Health < player.HealthTotal {
-			if player.RemoveItem(item, 1) {
+			if player.RemoveItem(item) {
 				player.Heal(10)
 			}
 		}
