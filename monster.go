@@ -69,6 +69,21 @@ func (monster *Monster) run() {
 	}
 }
 
+func (monster *Monster) TakeDamage(amount int) {
+	monster.Health -= amount
+	if monster.Health <= 0 {
+		monster.quit <- true
+		delete(monster.Game.Monsters, monster)
+		monster.Game.addToPile(monster.Pos, "potion")
+		monster.Game.broadcast([]Message{
+			Message{
+				"action": "remove",
+				"id":     monster.Id,
+			},
+		})
+	}
+}
+
 func (monster *Monster) Move(dir string) {
 	game := monster.Game
 	pos := monster.Pos.Move(dir)
@@ -82,21 +97,6 @@ func (monster *Monster) Move(dir string) {
 				"action": "setPosition",
 				"id":     monster.Id,
 				"pos":    monster.Pos,
-			},
-		})
-	}
-}
-
-func (monster *Monster) TakeDamage(amount int) {
-	monster.Health -= amount
-	if monster.Health <= 0 {
-		monster.quit <- true
-		delete(monster.Game.Monsters, monster)
-		monster.Game.addToPile(monster.Pos, "potion")
-		monster.Game.broadcast([]Message{
-			Message{
-				"action": "remove",
-				"id":     monster.Id,
 			},
 		})
 	}

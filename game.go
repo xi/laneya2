@@ -289,56 +289,33 @@ func (game *Game) run() {
 					},
 				})
 			}
-		case cmsg := <-game.Msg:
-			player := cmsg.Player
-			msg := cmsg.Msg
-
-			if msg["action"] == "move" {
-				dir, ok := msg["dir"].(string)
-				if !ok {
-					continue
-				}
-				player.Move(dir)
-			} else if msg["action"] == "pickup" {
-				pile, ok := game.Piles[player.Pos]
+		case pmsg := <-game.Msg:
+			if pmsg.Msg["action"] == "move" {
+				dir, ok := pmsg.Msg["dir"].(string)
 				if ok {
-					delete(game.Piles, player.Pos)
-					for item, amount := range pile.Items {
-						player.AddItem(item, amount)
-					}
-					game.broadcast([]Message{
-						Message{
-							"action": "remove",
-							"id":     pile.Id,
-						},
-					})
+					pmsg.Player.Move(dir)
 				}
-			} else if msg["action"] == "drop" {
-				item, ok := msg["item"].(string)
-				if !ok {
-					continue
+			} else if pmsg.Msg["action"] == "pickup" {
+				pmsg.Player.PickupItems()
+			} else if pmsg.Msg["action"] == "drop" {
+				item, ok := pmsg.Msg["item"].(string)
+				if ok {
+					pmsg.Player.DropItem(item)
 				}
-				player.RemoveItem(item, 1)
-				game.addToPile(player.Pos, item)
-			} else if msg["action"] == "use" {
-				item, ok := msg["item"].(string)
-				if !ok {
-					continue
+			} else if pmsg.Msg["action"] == "use" {
+				item, ok := pmsg.Msg["item"].(string)
+				if ok {
+					pmsg.Player.UseItem(item)
 				}
-				player.UseItem(item)
 			} else if verbose {
-				log.Println("unknown action", msg)
+				log.Println("unknown action", pmsg.Msg)
 			}
 		case mmsg := <-game.MMsg:
-			monster := mmsg.Monster
-			msg := mmsg.Msg
-
-			if msg["action"] == "move" {
-				dir, ok := msg["dir"].(string)
-				if !ok {
-					continue
+			if mmsg.Msg["action"] == "move" {
+				dir, ok := mmsg.Msg["dir"].(string)
+				if ok {
+					mmsg.Monster.Move(dir)
 				}
-				monster.Move(dir)
 			}
 		}
 	}

@@ -20,26 +20,6 @@ type PlayerMessage struct {
 	Msg    Message
 }
 
-func (player *Player) Move(dir string) {
-	game := player.Game
-	pos := player.Pos.Move(dir)
-	monster := game.getMonsterAt(pos)
-	if monster != nil {
-		monster.TakeDamage(5)
-	} else if game.IsFree(pos) {
-		player.Pos = pos
-		game.broadcast([]Message{
-			Message{
-				"action": "setPosition",
-				"id":     player.Id,
-				"pos":    player.Pos,
-			},
-		})
-
-		game.MaybeNextLevel()
-	}
-}
-
 func (player *Player) TakeDamage(amount uint) {
 	// TODO: death if amount >= player.Health
 	player.Health -= amount
@@ -53,7 +33,6 @@ func (player *Player) TakeDamage(amount uint) {
 }
 
 func (player *Player) Heal(amount uint) {
-	// TODO: death if amount >= player.Health
 	player.Health += amount
 	if player.Health > player.HealthTotal {
 		player.Health = player.HealthTotal
@@ -104,6 +83,48 @@ func (player *Player) RemoveItem(item string, amount uint) {
 			"amount": value,
 		},
 	}
+}
+
+func (player *Player) Move(dir string) {
+	game := player.Game
+	pos := player.Pos.Move(dir)
+	monster := game.getMonsterAt(pos)
+	if monster != nil {
+		monster.TakeDamage(5)
+	} else if game.IsFree(pos) {
+		player.Pos = pos
+		game.broadcast([]Message{
+			Message{
+				"action": "setPosition",
+				"id":     player.Id,
+				"pos":    player.Pos,
+			},
+		})
+
+		game.MaybeNextLevel()
+	}
+}
+
+func (player *Player) PickupItems() {
+	game := player.Game
+	pile, ok := game.Piles[player.Pos]
+	if ok {
+		delete(game.Piles, player.Pos)
+		for item, amount := range pile.Items {
+			player.AddItem(item, amount)
+		}
+		game.broadcast([]Message{
+			Message{
+				"action": "remove",
+				"id":     pile.Id,
+			},
+		})
+	}
+}
+
+func (player *Player) DropItem(item string) {
+	player.RemoveItem(item, 1)
+	player.Game.addToPile(player.Pos, item)
 }
 
 func (player *Player) UseItem(item string) {
