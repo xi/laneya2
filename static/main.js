@@ -18,6 +18,10 @@ var COLORS = {
     'pile': 3,
 };
 
+var ITEMS = {
+    'potion': {health: 10},
+};
+
 var inRect = function(pos, rect, withWalls) {
     if (withWalls) {
         return pos.x >= rect.x1 - 1 && pos.x <= rect.x2 + 1
@@ -208,6 +212,35 @@ var screen = {
         }
     },
 
+    table(items, cols) {
+        var c = Math.floor(cols / 3);
+        var item = ITEMS[this.menuSelected] || {};
+        var rows = items.map(([label, key]) => {
+            return [label, '' + game.stats[key], '' + (item[key] || ''), item[key]];
+        });
+        var l1 = Math.max(...rows.map(row => row[0].length));
+        var l2 = Math.max(...rows.map(row => row[1].length));
+        var l3 = Math.max(...rows.map(row => row[2].length));
+
+        if ((l1 + 2) + l2 + (l3 ? l3 + 3 : 0) + 2 > c) {
+            l1 = c - (2 + l2 + (l3 ? l3 + 3 : 0) + 2);
+        }
+        rows.forEach((row, i) => {
+            this.commitSpan((row[0].substr(0, l1) + ':').padEnd(l1 + 2), -1);
+            this.commitSpan(row[1].padStart(l2), -1);
+            var l = (l1 + 2) + l2;
+            if (row[3]) {
+                this.commitSpan(' → ', 7);
+                this.commitSpan(row[2].padStart(l3), row[3] < 0 ? 1 : 2);
+                l += 3 + l3;
+            }
+            this.commitSpan(' '.repeat(c - l));
+            if ((i + 1) % 3 === 0) {
+                $pre.append('\n');
+            }
+        });
+    },
+
     renderHealth() {
         var health = Math.round(game.stats.health / game.stats.healthTotal * this.cols);
         this.commitSpan('='.repeat(health), 1);
@@ -216,7 +249,7 @@ var screen = {
     },
 
     renderMenu() {
-        var rows = this.rows - 3;
+        var rows = this.rows - 4;
         var items = Object.entries(game.inventory);
         items.sort();
 
@@ -235,6 +268,16 @@ var screen = {
         }
 
         this.menuSelected = items.length ? items[this.menuCursor][0] : null;
+
+        this.table([
+            ['Health', 'health'],
+            ['Attack', 'attack'],
+            ['Sight', 'lineOfSight'],
+            ['Max Health', 'healthTotal'],
+            ['Defense', 'defense'],
+            ['Speed', 'speed'],
+        ], this.cols);
+        $pre.append('\n');
 
         for (let i = 0; i < rows; i++) {
             if (i + this.menuOffset < items.length) {
