@@ -64,8 +64,9 @@ func (player *Player) AddItem(item string, amount uint) {
 	}
 }
 
-func (player *Player) RemoveItem(item string, amount uint) {
+func (player *Player) RemoveItem(item string, amount uint) bool {
 	value, ok := player.Inventory[item]
+	success := false
 	if !ok {
 		value = 0
 	} else if value <= amount {
@@ -74,6 +75,7 @@ func (player *Player) RemoveItem(item string, amount uint) {
 	} else {
 		value -= amount
 		player.Inventory[item] = value
+		success = true
 	}
 
 	player.Send <- []Message{
@@ -83,6 +85,8 @@ func (player *Player) RemoveItem(item string, amount uint) {
 			"amount": value,
 		},
 	}
+
+	return success
 }
 
 func (player *Player) Move(dir string) {
@@ -123,17 +127,18 @@ func (player *Player) PickupItems() {
 }
 
 func (player *Player) DropItem(item string) {
-	player.RemoveItem(item, 1)
-	player.Game.addToPile(player.Pos, item)
+	if player.RemoveItem(item, 1) {
+		player.Game.addToPile(player.Pos, item)
+	}
 }
 
 func (player *Player) UseItem(item string) {
 	// TODO: send result in a single transaction
-	// TODO: check if item is in inventory
 	if item == "potion" {
 		if player.Health < player.HealthTotal {
-			player.RemoveItem(item, 1)
-			player.Heal(10)
+			if player.RemoveItem(item, 1) {
+				player.Heal(10)
+			}
 		}
 	}
 }
