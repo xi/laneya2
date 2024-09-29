@@ -4,7 +4,8 @@ import "github.com/gorilla/websocket"
 
 type Player struct {
 	Game        *Game
-	Send        chan []Message
+	send        chan []Message
+	queue       []Message
 	conn        *websocket.Conn
 	alive       bool
 	Id          int
@@ -20,16 +21,25 @@ type PlayerMessage struct {
 	Msg    Message
 }
 
+func (player *Player) Enqueue(msg Message) {
+	player.queue = append(player.queue, msg)
+}
+
+func (player *Player) Flush() {
+	if len(player.queue) > 0 {
+		player.send <- player.queue
+		player.queue = []Message{}
+	}
+}
+
 func (player *Player) TakeDamage(amount uint) {
 	// TODO: death if amount >= player.Health
 	player.Health -= amount
-	player.Send <- []Message{
-		Message{
-			"action":      "setHealth",
-			"health":      player.Health,
-			"healthTotal": player.HealthTotal,
-		},
-	}
+	player.Enqueue(Message{
+		"action":      "setHealth",
+		"health":      player.Health,
+		"healthTotal": player.HealthTotal,
+	})
 }
 
 func (player *Player) Heal(amount uint) {
@@ -37,13 +47,11 @@ func (player *Player) Heal(amount uint) {
 	if player.Health > player.HealthTotal {
 		player.Health = player.HealthTotal
 	}
-	player.Send <- []Message{
-		Message{
-			"action":      "setHealth",
-			"health":      player.Health,
-			"healthTotal": player.HealthTotal,
-		},
-	}
+	player.Enqueue(Message{
+		"action":      "setHealth",
+		"health":      player.Health,
+		"healthTotal": player.HealthTotal,
+	})
 }
 
 func (player *Player) AddItem(item string, amount uint) {
@@ -55,13 +63,11 @@ func (player *Player) AddItem(item string, amount uint) {
 	}
 	player.Inventory[item] = value
 
-	player.Send <- []Message{
-		Message{
-			"action": "setInventory",
-			"item":   item,
-			"amount": value,
-		},
-	}
+	player.Enqueue(Message{
+		"action": "setInventory",
+		"item":   item,
+		"amount": value,
+	})
 }
 
 func (player *Player) RemoveItem(item string, amount uint) bool {
@@ -78,13 +84,11 @@ func (player *Player) RemoveItem(item string, amount uint) bool {
 		success = true
 	}
 
-	player.Send <- []Message{
-		Message{
-			"action": "setInventory",
-			"item":   item,
-			"amount": value,
-		},
-	}
+	player.Enqueue(Message{
+		"action": "setInventory",
+		"item":   item,
+		"amount": value,
+	})
 
 	return success
 }
@@ -97,12 +101,10 @@ func (player *Player) Move(dir string) {
 		monster.TakeDamage(5)
 	} else if game.IsFree(pos) {
 		player.Pos = pos
-		game.broadcast([]Message{
-			Message{
-				"action": "setPosition",
-				"id":     player.Id,
-				"pos":    player.Pos,
-			},
+		game.Enqueue(Message{
+			"action": "setPosition",
+			"id":     player.Id,
+			"pos":    player.Pos,
 		})
 
 		game.MaybeNextLevel()
@@ -117,11 +119,9 @@ func (player *Player) PickupItems() {
 		for item, amount := range pile.Items {
 			player.AddItem(item, amount)
 		}
-		game.broadcast([]Message{
-			Message{
-				"action": "remove",
-				"id":     pile.Id,
-			},
+		game.Enqueue(Message{
+			"action": "remove",
+			"id":     pile.Id,
 		})
 	}
 }
@@ -133,7 +133,6 @@ func (player *Player) DropItem(item string) {
 }
 
 func (player *Player) UseItem(item string) {
-	// TODO: send result in a single transaction
 	if item == "potion" {
 		if player.Health < player.HealthTotal {
 			if player.RemoveItem(item, 1) {

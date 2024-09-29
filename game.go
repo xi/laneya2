@@ -63,9 +63,15 @@ func getGame(id string) *Game {
 	return game
 }
 
-func (game *Game) broadcast(msgs []Message) {
+func (game *Game) Enqueue(msg Message) {
 	for player, _ := range game.Players {
-		player.Send <- msgs
+		player.Enqueue(msg)
+	}
+}
+
+func (game *Game) Flush() {
+	for player, _ := range game.Players {
+		player.Flush()
 	}
 }
 
@@ -131,16 +137,14 @@ func (game *Game) MaybeNextLevel() {
 	}
 
 	game.generateMap()
-	msgs := []Message{
-		Message{
-			"action": "setLevel",
-			"rects":  game.Rects,
-			"ladder": game.Ladder,
-		},
-	}
+	game.Enqueue(Message{
+		"action": "setLevel",
+		"rects":  game.Rects,
+		"ladder": game.Ladder,
+	})
 
 	for monster := range game.Monsters {
-		msgs = append(msgs, Message{
+		game.Enqueue(Message{
 			"action": "create",
 			"type":   "monster",
 			"rune":   string(monster.Rune),
@@ -151,14 +155,12 @@ func (game *Game) MaybeNextLevel() {
 
 	for player := range game.Players {
 		player.Pos = Point{0, 0}
-		msgs = append(msgs, Message{
+		game.Enqueue(Message{
 			"action": "setPosition",
 			"id":     player.Id,
 			"pos":    player.Pos,
 		})
 	}
-
-	game.broadcast(msgs)
 }
 
 func (game *Game) getMonsterAt(pos Point) *Monster {
@@ -194,14 +196,12 @@ func (game *Game) addToPile(pos Point, item string) {
 		pile.Items[item] = value + 1
 	} else {
 		pile.Items[item] = 1
-		game.broadcast([]Message{
-			Message{
-				"action": "create",
-				"type":   "pile",
-				"id":     pile.Id,
-				"rune":   "%",
-				"pos":    pos,
-			},
+		game.Enqueue(Message{
+			"action": "create",
+			"type":   "pile",
+			"id":     pile.Id,
+			"rune":   "%",
+			"pos":    pos,
 		})
 	}
 }
@@ -213,24 +213,22 @@ func (game *Game) run() {
 			if verbose {
 				log.Println("create player", game.Id, player.Id)
 			}
-			setup := []Message{
-				Message{
-					"action": "setId",
-					"id":     player.Id,
-				},
-				Message{
-					"action":      "setHealth",
-					"health":      player.Health,
-					"healthTotal": player.HealthTotal,
-				},
-				Message{
-					"action": "setLevel",
-					"rects":  game.Rects,
-					"ladder": game.Ladder,
-				},
-			}
+			player.Enqueue(Message{
+				"action": "setId",
+				"id":     player.Id,
+			})
+			player.Enqueue(Message{
+				"action":      "setHealth",
+				"health":      player.Health,
+				"healthTotal": player.HealthTotal,
+			})
+			player.Enqueue(Message{
+				"action": "setLevel",
+				"rects":  game.Rects,
+				"ladder": game.Ladder,
+			})
 			for monster := range game.Monsters {
-				setup = append(setup, Message{
+				player.Enqueue(Message{
 					"action": "create",
 					"type":   "monster",
 					"rune":   string(monster.Rune),
@@ -239,7 +237,7 @@ func (game *Game) run() {
 				})
 			}
 			for pos, pile := range game.Piles {
-				setup = append(setup, Message{
+				player.Enqueue(Message{
 					"action": "create",
 					"type":   "pile",
 					"rune":   "%",
@@ -248,7 +246,7 @@ func (game *Game) run() {
 				})
 			}
 			for p := range game.Players {
-				setup = append(setup, Message{
+				player.Enqueue(Message{
 					"action": "create",
 					"type":   "player",
 					"rune":   "@",
@@ -256,18 +254,15 @@ func (game *Game) run() {
 					"pos":    p.Pos,
 				})
 			}
-			player.Send <- setup
 
 			game.Players[player] = true
 
-			game.broadcast([]Message{
-				Message{
-					"action": "create",
-					"type":   "player",
-					"rune":   "@",
-					"id":     player.Id,
-					"pos":    player.Pos,
-				},
+			game.Enqueue(Message{
+				"action": "create",
+				"type":   "player",
+				"rune":   "@",
+				"id":     player.Id,
+				"pos":    player.Pos,
 			})
 		case player := <-game.unregister:
 			if verbose {
@@ -282,11 +277,9 @@ func (game *Game) run() {
 				delete(games, game.Id)
 				mux.Unlock()
 			} else {
-				game.broadcast([]Message{
-					Message{
-						"action": "remove",
-						"id":     player.Id,
-					},
+				game.Enqueue(Message{
+					"action": "remove",
+					"id":     player.Id,
 				})
 			}
 		case pmsg := <-game.Msg:
@@ -318,5 +311,6 @@ func (game *Game) run() {
 				}
 			}
 		}
+		game.Flush()
 	}
 }

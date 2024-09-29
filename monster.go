@@ -75,11 +75,9 @@ func (monster *Monster) TakeDamage(amount int) {
 		monster.quit <- true
 		delete(monster.Game.Monsters, monster)
 		monster.Game.addToPile(monster.Pos, "potion")
-		monster.Game.broadcast([]Message{
-			Message{
-				"action": "remove",
-				"id":     monster.Id,
-			},
+		monster.Game.Enqueue(Message{
+			"action": "remove",
+			"id":     monster.Id,
 		})
 	}
 }
@@ -92,12 +90,10 @@ func (monster *Monster) Move(dir string) {
 		player.TakeDamage(2)
 	} else if game.getMonsterAt(pos) == nil && game.IsFree(pos) {
 		monster.Pos = pos
-		game.broadcast([]Message{
-			Message{
-				"action": "setPosition",
-				"id":     monster.Id,
-				"pos":    monster.Pos,
-			},
+		game.Enqueue(Message{
+			"action": "setPosition",
+			"id":     monster.Id,
+			"pos":    monster.Pos,
 		})
 	}
 }

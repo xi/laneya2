@@ -58,7 +58,7 @@ func (player *Player) writePump() {
 
 	for {
 		select {
-		case data := <-player.Send:
+		case data := <-player.send:
 			err := player.conn.WriteJSON(data)
 			if err != nil {
 				if verbose {
@@ -95,7 +95,8 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 
 	player := &Player{
 		Game:        game,
-		Send:        make(chan []Message),
+		send:        make(chan []Message),
+		queue:       []Message{},
 		conn:        conn,
 		alive:       true,
 		Id:          game.createId(),
