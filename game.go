@@ -82,6 +82,26 @@ func (game *Game) createId() int {
 	return game.lastId
 }
 
+func (game *Game) removePlayer(player *Player) {
+	if _, ok := game.Players[player]; !ok {
+		return
+	}
+
+	if verbose {
+		log.Println("remove player", game.Id, player.Id)
+	}
+	delete(game.Players, player)
+	close(player.send)
+
+	game.Enqueue(Message{
+		"action": "remove",
+		"id":     player.Id,
+	})
+	for item, amount := range player.Inventory {
+		game.addToPile(player.Pos, item, amount)
+	}
+}
+
 func (game *Game) generateMap() {
 	for monster := range game.Monsters {
 		monster.quit <- true
@@ -273,10 +293,7 @@ func (game *Game) run() {
 				"pos":    player.Pos,
 			})
 		case player := <-game.unregister:
-			if verbose {
-				log.Println("remove player", game.Id, player.Id)
-			}
-			delete(game.Players, player)
+			game.removePlayer(player)
 			if len(game.Players) == 0 {
 				if verbose {
 					log.Println("remove game", game.Id)
@@ -284,14 +301,6 @@ func (game *Game) run() {
 				mux.Lock()
 				delete(games, game.Id)
 				mux.Unlock()
-			} else {
-				game.Enqueue(Message{
-					"action": "remove",
-					"id":     player.Id,
-				})
-				for item, amount := range player.Inventory {
-					game.addToPile(player.Pos, item, amount)
-				}
 			}
 		case pmsg := <-game.Msg:
 			if pmsg.Msg["action"] == "move" {

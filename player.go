@@ -8,7 +8,6 @@ import (
 
 type Player struct {
 	Game        *Game
-	quit        chan bool
 	send        chan []Message
 	queue       []Message
 	conn        *websocket.Conn
@@ -45,7 +44,7 @@ func (player *Player) Flush() {
 func (player *Player) TakeDamage(attack float64) {
 	amount := uint(math.Round(attack * attack / (attack + player.Defense)))
 	if amount > player.Health {
-		player.quit <- true
+		player.Game.removePlayer(player)
 	} else {
 		player.Health -= amount
 		player.CommitStats()

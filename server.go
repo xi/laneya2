@@ -61,7 +61,10 @@ func (player *Player) writePump() {
 
 	for {
 		select {
-		case data := <-player.send:
+		case data, ok := <-player.send:
+			if !ok {
+				return
+			}
 			err := player.conn.WriteJSON(data)
 			if err != nil {
 				if verbose {
@@ -69,8 +72,6 @@ func (player *Player) writePump() {
 				}
 				return
 			}
-		case <-player.quit:
-			return
 		case <-ticker.C:
 			if !player.alive {
 				return
@@ -100,7 +101,6 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 
 	player := &Player{
 		Game:        game,
-		quit:        make(chan bool),
 		send:        make(chan []Message),
 		queue:       []Message{},
 		conn:        conn,
