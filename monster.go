@@ -1,6 +1,9 @@
 package main
 
-import "time"
+import (
+	"math"
+	"time"
+)
 
 type Monster struct {
 	Game    *Game
@@ -11,7 +14,7 @@ type Monster struct {
 	Health  float64
 	Attack  float64
 	Defense float64
-	Speed   float64
+	Speed   int
 }
 
 type MonsterMessage struct {
@@ -26,7 +29,7 @@ func makeMonster(game *Game, pos Point) *Monster {
 		Id:      game.createId(),
 		Rune:    'm',
 		Pos:     pos,
-		Speed:   2,
+		Speed:   0,
 		Attack:  2,
 		Defense: 0,
 		Health:  10,
@@ -36,7 +39,8 @@ func makeMonster(game *Game, pos Point) *Monster {
 }
 
 func (monster *Monster) run() {
-	timeout := time.Duration(float64(time.Second) / monster.Speed)
+	frequency := 2 * math.Pow(1.07, float64(monster.Speed))
+	timeout := time.Duration(float64(time.Second) / frequency)
 	ticker := time.NewTicker(timeout)
 	defer ticker.Stop()
 

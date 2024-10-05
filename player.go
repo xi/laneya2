@@ -20,7 +20,7 @@ type Player struct {
 	Attack      float64
 	Defense     float64
 	LineOfSight uint
-	Speed       float64
+	Speed       int
 	Inventory   map[string]uint
 	Weapon      string
 	Armor       string

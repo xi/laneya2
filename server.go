@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math"
 	"net"
 	"net/http"
 	"os"
@@ -42,7 +43,8 @@ func (player *Player) readPump() {
 		if timer != nil {
 			timer.Stop()
 		}
-		timeout := time.Duration(float64(time.Second) / player.Speed)
+		frequency := 10 * math.Pow(1.07, float64(player.Speed))
+		timeout := time.Duration(float64(time.Second) / frequency)
 		timer = time.AfterFunc(time.Until(lastTime.Add(timeout)), func() {
 			lastTime = time.Now()
 			player.Game.Msg <- PlayerMessage{player, msg}
@@ -109,7 +111,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		Attack:      5,
 		Defense:     0,
 		LineOfSight: 5,
-		Speed:       20,
+		Speed:       0,
 		Inventory:   make(map[string]uint),
 	}
 	conn.SetPongHandler(func(string) error {

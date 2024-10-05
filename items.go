@@ -16,7 +16,7 @@ type Item struct {
 	Attack      float64
 	Defense     float64
 	LineOfSight int
-	Speed       float64
+	Speed       int
 }
 
 var Items = map[string]Item{
