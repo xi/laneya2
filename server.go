@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -124,6 +125,11 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	go player.readPump()
 }
 
+func serveItems(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(Items)
+}
+
 func serve(addr string) {
 	http.HandleFunc("GET /ws/{id}", serveWs)
 
@@ -166,6 +172,7 @@ func main() {
 		http.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 			http.ServeFile(w, r, "index.html")
 		})
+		http.HandleFunc("GET /items/", serveItems)
 		http.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	}
 

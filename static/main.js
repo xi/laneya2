@@ -18,9 +18,7 @@ var COLORS = {
     'pile': 3,
 };
 
-var ITEMS = {
-    'potion': {health: 10},
-};
+var ITEMS = await fetch('/items/').then(r => r.json());
 
 var inRect = function(pos, rect, withWalls) {
     if (withWalls) {

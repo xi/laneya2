@@ -9,14 +9,14 @@ const (
 )
 
 type Item struct {
-	Type        uint
-	Value       uint
-	Health      uint
-	HealthTotal uint
-	Attack      float64
-	Defense     float64
-	LineOfSight int
-	Speed       int
+	Type        uint    `json:"type"`
+	Value       uint    `json:"value"`
+	Health      uint    `json:"health"`
+	HealthTotal uint    `json:"healthTotal"`
+	Attack      float64 `json:"attack"`
+	Defense     float64 `json:"defense"`
+	LineOfSight int     `json:"lineOfSight"`
+	Speed       int     `json:"speed"`
 }
 
 var Items = map[string]Item{
