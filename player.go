@@ -43,7 +43,7 @@ func (player *Player) Flush() {
 
 func (player *Player) TakeDamage(attack float64) {
 	amount := uint(math.Round(attack * attack / (attack + player.Defense)))
-	if amount > player.Health {
+	if amount >= player.Health {
 		player.Game.removePlayer(player)
 	} else {
 		player.Health -= amount

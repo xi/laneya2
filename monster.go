@@ -51,7 +51,7 @@ func (monster *Monster) run() {
 
 func (monster *Monster) TakeDamage(attack float64) {
 	amount := attack * attack / (attack + monster.Defense)
-	if amount > monster.Health {
+	if amount >= monster.Health {
 		monster.quit <- true
 		delete(monster.Game.Monsters, monster)
 		monster.Game.addToPile(monster.Pos, RandomItem(), 1)
