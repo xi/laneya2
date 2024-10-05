@@ -24,6 +24,7 @@ type Game struct {
 	lastId     int
 	Rects      []Rect
 	Ladder     Point
+	Level      uint
 }
 
 var verbose = false
@@ -51,6 +52,7 @@ func getGame(id string) *Game {
 			register:   make(chan *Player),
 			unregister: make(chan *Player),
 			lastId:     0,
+			Level:      1,
 		}
 		game.generateMap()
 		mux.Lock()
@@ -135,6 +137,8 @@ func (game *Game) MaybeNextLevel() {
 			return
 		}
 	}
+
+	game.Level += 1
 
 	game.generateMap()
 	game.Enqueue(Message{

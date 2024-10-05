@@ -30,9 +30,9 @@ func makeMonster(game *Game, pos Point) *Monster {
 		Rune:    'm',
 		Pos:     pos,
 		Speed:   0,
-		Attack:  2,
-		Defense: 0,
-		Health:  10,
+		Attack:  2 + float64(game.Level),
+		Defense: 0 + float64(game.Level),
+		Health:  10 + float64(game.Level),
 	}
 	go monster.run()
 	return monster
