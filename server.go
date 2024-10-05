@@ -42,7 +42,7 @@ func (player *Player) readPump() {
 		if timer != nil {
 			timer.Stop()
 		}
-		timeout := time.Duration(float32(time.Second) / float32(player.Speed))
+		timeout := time.Duration(float64(time.Second) / player.Speed)
 		timer = time.AfterFunc(time.Until(lastTime.Add(timeout)), func() {
 			lastTime = time.Now()
 			player.Game.Msg <- PlayerMessage{player, msg}

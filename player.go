@@ -1,6 +1,10 @@
 package main
 
-import "github.com/gorilla/websocket"
+import (
+	"math"
+
+	"github.com/gorilla/websocket"
+)
 
 type Player struct {
 	Game        *Game
@@ -13,10 +17,10 @@ type Player struct {
 	Pos         Point
 	Health      uint
 	HealthTotal uint
-	Attack      uint
-	Defense     uint
+	Attack      float64
+	Defense     float64
 	LineOfSight uint
-	Speed       uint
+	Speed       float64
 	Inventory   map[string]uint
 	Weapon      string
 	Armor       string
@@ -38,7 +42,8 @@ func (player *Player) Flush() {
 	}
 }
 
-func (player *Player) TakeDamage(amount uint) {
+func (player *Player) TakeDamage(rawAmount float64) {
+	amount := uint(math.Round(rawAmount))
 	if amount > player.Health {
 		player.quit <- true
 	} else {
@@ -65,7 +70,7 @@ func (player *Player) ApplyItem(item Item) {
 	player.Attack += item.Attack
 	player.Defense += item.Defense
 	player.LineOfSight = uint(int(player.LineOfSight) + item.LineOfSight)
-	player.Speed = uint(int(player.Speed) + item.Speed)
+	player.Speed += item.Speed
 }
 
 func (player *Player) UnapplyItem(item Item) {
@@ -74,7 +79,7 @@ func (player *Player) UnapplyItem(item Item) {
 	player.Attack -= item.Attack
 	player.Defense -= item.Defense
 	player.LineOfSight = uint(int(player.LineOfSight) - item.LineOfSight)
-	player.Speed = uint(int(player.Speed) - item.Speed)
+	player.Speed -= item.Speed
 }
 
 func (player *Player) AddItem(item string, amount uint) {

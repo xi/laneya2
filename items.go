@@ -13,10 +13,10 @@ type Item struct {
 	Value       uint
 	Health      uint
 	HealthTotal uint
-	Attack      uint
-	Defense     uint
+	Attack      float64
+	Defense     float64
 	LineOfSight int
-	Speed       int
+	Speed       float64
 }
 
 var Items = map[string]Item{

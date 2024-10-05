@@ -8,10 +8,10 @@ type Monster struct {
 	Id      int
 	Rune    rune
 	Pos     Point
-	Health  uint
-	Attack  uint
-	Defense uint
-	Speed   uint
+	Health  float64
+	Attack  float64
+	Defense float64
+	Speed   float64
 }
 
 type MonsterMessage struct {
@@ -36,7 +36,7 @@ func makeMonster(game *Game, pos Point) *Monster {
 }
 
 func (monster *Monster) run() {
-	timeout := time.Duration(float32(time.Second) / float32(monster.Speed))
+	timeout := time.Duration(float64(time.Second) / monster.Speed)
 	ticker := time.NewTicker(timeout)
 	defer ticker.Stop()
 
@@ -73,7 +73,7 @@ func (monster *Monster) run() {
 	}
 }
 
-func (monster *Monster) TakeDamage(amount uint) {
+func (monster *Monster) TakeDamage(amount float64) {
 	if amount > monster.Health {
 		monster.quit <- true
 		delete(monster.Game.Monsters, monster)
