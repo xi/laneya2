@@ -74,7 +74,7 @@ func (monster *Monster) run() {
 }
 
 func (monster *Monster) TakeDamage(attack float64) {
-	amount := attack * (1 - monster.Defense/(monster.Defense+100))
+	amount := attack * attack / (attack + monster.Defense)
 	if amount > monster.Health {
 		monster.quit <- true
 		delete(monster.Game.Monsters, monster)
