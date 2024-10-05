@@ -65,11 +65,10 @@ var game = {
         }
     },
 
-    inView(a, b) {
+    inView(a, b, r) {
         // check radius
         var dx = a.x - b.x;
         var dy = a.y - b.y;
-        var r = this.stats.lineOfSight;
         if (dx * dx + dy * dy >= r * r) {
             return false;
         }
@@ -128,7 +127,7 @@ var game = {
         }
 
         var inView = () => Object.values(this.objects).some(
-            obj => obj.type === 'player' && this.inView(obj.pos, {x, y})
+            obj => obj.type === 'player' && this.inView(obj.pos, {x, y}, obj.lineOfSight)
         );
 
         var objs = Object.values(this.objects).filter(obj => x === obj.pos.x && y === obj.pos.y);
@@ -149,13 +148,12 @@ var game = {
         return [' ', -1];
     },
 
-    updateSeen(pos) {
-        var r = this.stats.lineOfSight;
+    updateSeen(pos, r) {
         for (let dy = -r; dy <= r; dy++) {
             const y = pos.y + dy;
             for (let dx = -r; dx <= r; dx++) {
                 const x = pos.x + dx;
-                if (!this.seen[[x, y]] && this.inView(pos, {x, y})) {
+                if (!this.seen[[x, y]] && this.inView(pos, {x, y}, r)) {
                     this.seen[[x, y]] = true;
                 }
             }
@@ -359,18 +357,21 @@ socket.onmessage = function(event) {
                 }
             }
         } else if (msg.action === 'create') {
-            game.objects[msg.id] = {
-                type: msg.type,
-                pos: msg.pos,
-                rune: msg.rune,
-            };
+            game.objects[msg.id] = msg;
             if (msg.type === 'player') {
-                game.updateSeen(msg.pos);
+                game.updateSeen(msg.pos, msg.lineOfSight);
             }
         } else if (msg.action === 'setPosition') {
-            game.objects[msg.id].pos = msg.pos;
-            if (game.objects[msg.id].type === 'player') {
-                game.updateSeen(msg.pos);
+            const obj = game.objects[msg.id];
+            obj.pos = msg.pos;
+            if (obj.type === 'player') {
+                game.updateSeen(obj.pos, obj.lineOfSight);
+            }
+        } else if (msg.action === 'setLineOfSight') {
+            const obj = game.objects[msg.id];
+            obj.lineOfSight = msg.value;
+            if (obj.type === 'player') {
+                game.updateSeen(obj.pos, obj.lineOfSight);
             }
         } else if (msg.action === 'setStats') {
             game.stats = msg;

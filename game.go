@@ -275,22 +275,24 @@ func (game *Game) run() {
 			}
 			for p := range game.Players {
 				player.Enqueue(Message{
-					"action": "create",
-					"type":   "player",
-					"rune":   "@",
-					"id":     p.Id,
-					"pos":    p.Pos,
+					"action":      "create",
+					"type":        "player",
+					"rune":        "@",
+					"id":          p.Id,
+					"pos":         p.Pos,
+					"lineOfSight": p.LineOfSight,
 				})
 			}
 
 			game.Players[player] = true
 
 			game.Enqueue(Message{
-				"action": "create",
-				"type":   "player",
-				"rune":   "@",
-				"id":     player.Id,
-				"pos":    player.Pos,
+				"action":      "create",
+				"type":        "player",
+				"rune":        "@",
+				"id":          player.Id,
+				"pos":         player.Pos,
+				"lineOfSight": player.LineOfSight,
 			})
 		case player := <-game.unregister:
 			game.removePlayer(player)

@@ -65,6 +65,12 @@ func (player *Player) CommitStats() {
 		"lineOfSight": player.LineOfSight,
 		"speed":       player.Speed,
 	})
+
+	player.Game.Enqueue(Message{
+		"action": "setLineOfSight",
+		"id":     player.Id,
+		"value":  player.LineOfSight,
+	})
 }
 
 func (player *Player) ApplyItem(item Item) {
