@@ -185,14 +185,22 @@ func (player *Player) UseItem(name string) {
 		if old, ok := Items[player.Weapon]; ok {
 			player.UnapplyItem(old)
 		}
-		player.ApplyItem(item)
-		player.Weapon = name
+		if name != player.Weapon {
+			player.ApplyItem(item)
+			player.Weapon = name
+		} else {
+			player.Weapon = ""
+		}
 	case ARMOR:
 		if old, ok := Items[player.Armor]; ok {
 			player.UnapplyItem(old)
 		}
-		player.ApplyItem(item)
-		player.Armor = name
+		if name != player.Armor {
+			player.ApplyItem(item)
+			player.Armor = name
+		} else {
+			player.Armor = ""
+		}
 	}
 
 	if player.Health > player.HealthTotal {
