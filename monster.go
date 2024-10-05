@@ -77,7 +77,7 @@ func (monster *Monster) TakeDamage(amount uint) {
 	if amount > monster.Health {
 		monster.quit <- true
 		delete(monster.Game.Monsters, monster)
-		monster.Game.addToPile(monster.Pos, "potion", 1)
+		monster.Game.addToPile(monster.Pos, "Small Potion", 1)
 		monster.Game.Enqueue(Message{
 			"action": "remove",
 			"id":     monster.Id,

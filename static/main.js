@@ -363,8 +363,8 @@ socket.onmessage = function(event) {
             if (game.objects[msg.id].type === 'player') {
                 game.updateSeen(msg.pos);
             }
-        } else if (msg.action === 'setStat') {
-            game.stats[msg.stat] = msg.value;
+        } else if (msg.action === 'setStats') {
+            game.stats = msg;
         } else if (msg.action === 'remove') {
             delete game.objects[msg.id];
         } else if (msg.action === 'setInventory') {

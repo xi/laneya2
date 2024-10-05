@@ -18,6 +18,8 @@ type Player struct {
 	LineOfSight uint
 	Speed       uint
 	Inventory   map[string]uint
+	Weapon      string
+	Armor       string
 }
 
 type PlayerMessage struct {
@@ -41,24 +43,38 @@ func (player *Player) TakeDamage(amount uint) {
 		player.quit <- true
 	} else {
 		player.Health -= amount
-		player.Enqueue(Message{
-			"action": "setStat",
-			"stat":   "health",
-			"value":  player.Health,
-		})
+		player.AnnounceStats()
 	}
 }
 
-func (player *Player) Heal(amount uint) {
-	player.Health += amount
-	if player.Health > player.HealthTotal {
-		player.Health = player.HealthTotal
-	}
+func (player *Player) AnnounceStats() {
 	player.Enqueue(Message{
-		"action": "setStat",
-		"stat":   "health",
-		"value":  player.Health,
+		"action":      "setStats",
+		"health":      player.Health,
+		"healthTotal": player.HealthTotal,
+		"attack":      player.Attack,
+		"defense":     player.Defense,
+		"lineOfSight": player.LineOfSight,
+		"speed":       player.Speed,
 	})
+}
+
+func (player *Player) ApplyItem(item Item) {
+	player.Health += item.Health + item.HealthTotal
+	player.HealthTotal += item.HealthTotal
+	player.Attack += item.Attack
+	player.Defense += item.Defense
+	player.LineOfSight = uint(int(player.LineOfSight) + item.LineOfSight)
+	player.Speed = uint(int(player.Speed) + item.Speed)
+}
+
+func (player *Player) UnapplyItem(item Item) {
+	player.Health -= item.Health
+	player.HealthTotal -= item.HealthTotal
+	player.Attack -= item.Attack
+	player.Defense -= item.Defense
+	player.LineOfSight = uint(int(player.LineOfSight) - item.LineOfSight)
+	player.Speed = uint(int(player.Speed) - item.Speed)
 }
 
 func (player *Player) AddItem(item string, amount uint) {
@@ -136,16 +152,47 @@ func (player *Player) DropItem(item string) {
 	}
 }
 
-func (player *Player) UseItem(item string) {
-	if _, ok := player.Inventory[item]; !ok {
+func (player *Player) UseItem(name string) {
+	if _, ok := player.Inventory[name]; !ok {
 		return
 	}
 
-	switch item {
-	case "potion":
-		if player.Health < player.HealthTotal {
-			player.RemoveItem(item)
-			player.Heal(10)
-		}
+	item, ok := Items[name]
+	if !ok {
+		return
 	}
+
+	if item.Health != 0 &&
+		item.HealthTotal == 0 &&
+		item.Attack == 0 &&
+		item.Defense == 0 &&
+		item.LineOfSight == 0 &&
+		item.Speed == 0 &&
+		player.Health == player.HealthTotal {
+		return
+	}
+
+	switch item.Type {
+	case CONSUMABLE:
+		player.RemoveItem(name)
+		player.ApplyItem(item)
+	case WEAPON:
+		if old, ok := Items[player.Weapon]; ok {
+			player.UnapplyItem(old)
+		}
+		player.ApplyItem(item)
+		player.Weapon = name
+	case ARMOR:
+		if old, ok := Items[player.Armor]; ok {
+			player.UnapplyItem(old)
+		}
+		player.ApplyItem(item)
+		player.Armor = name
+	}
+
+	if player.Health > player.HealthTotal {
+		player.Health = player.HealthTotal
+	}
+
+	player.AnnounceStats()
 }
