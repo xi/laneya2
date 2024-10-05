@@ -48,11 +48,15 @@ func (player *Player) TakeDamage(attack float64) {
 		player.quit <- true
 	} else {
 		player.Health -= amount
-		player.AnnounceStats()
+		player.CommitStats()
 	}
 }
 
-func (player *Player) AnnounceStats() {
+func (player *Player) CommitStats() {
+	if player.Health > player.HealthTotal {
+		player.Health = player.HealthTotal
+	}
+
 	player.Enqueue(Message{
 		"action":      "setStats",
 		"health":      player.Health,
@@ -108,6 +112,20 @@ func (player *Player) RemoveItem(name string) {
 	} else {
 		amount = 0
 		delete(player.Inventory, name)
+
+		if name == player.Weapon {
+			player.Weapon = ""
+			if item, ok := Items[name]; ok {
+				player.UnapplyItem(item)
+				player.CommitStats()
+			}
+		} else if name == player.Armor {
+			player.Armor = ""
+			if item, ok := Items[name]; ok {
+				player.UnapplyItem(item)
+				player.CommitStats()
+			}
+		}
 	}
 
 	player.Enqueue(Message{
@@ -203,9 +221,5 @@ func (player *Player) UseItem(name string) {
 		}
 	}
 
-	if player.Health > player.HealthTotal {
-		player.Health = player.HealthTotal
-	}
-
-	player.AnnounceStats()
+	player.CommitStats()
 }
