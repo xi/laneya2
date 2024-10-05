@@ -5,20 +5,13 @@ var $pre = document.querySelector('pre');
 var params = new URLSearchParams(location.search);
 var gameId = params.get('game');
 
-var socketProtocol = location.protocol.replace('http', 'ws');
-var socket = new WebSocket(`${socketProtocol}//${location.host}/ws/${gameId}`);
-
-var send = function(data) {
-    socket.send(JSON.stringify(data));
-};
+var ITEMS = await fetch('/items.json').then(r => r.json());
 
 var COLORS = {
     'player': 4,
     'monster': 1,
     'pile': 3,
 };
-
-var ITEMS = await fetch('/items.json').then(r => r.json());
 
 var inRect = function(pos, rect, withWalls) {
     if (withWalls) {
@@ -338,6 +331,13 @@ var screen = {
             this.renderMap();
         }
     },
+};
+
+var socketProtocol = location.protocol.replace('http', 'ws');
+var socket = new WebSocket(`${socketProtocol}//${location.host}/ws/${gameId}`);
+
+var send = function(data) {
+    socket.send(JSON.stringify(data));
 };
 
 socket.onclose = function() {
