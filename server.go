@@ -154,14 +154,23 @@ func serve(addr string) {
 }
 
 func main() {
+	dumpItems := false
+
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "laneya [-v] [-s] [port]\n")
+		fmt.Fprintf(os.Stderr, "laneya [-v] [-s] [--dump-items] [port]\n")
 		flag.PrintDefaults()
 	}
 
 	flag.BoolVar(&verbose, "v", false, "enable verbose logs")
 	flag.BoolVar(&static, "s", false, "serve static files (for development)")
+	flag.BoolVar(&dumpItems, "dump-items", false, "dump items.json and exit")
 	flag.Parse()
+
+	if dumpItems {
+		json.NewEncoder(os.Stdout).Encode(Items)
+		return
+	}
 
 	addr := "localhost:8000"
 	if len(flag.Args()) > 0 {
@@ -172,7 +181,7 @@ func main() {
 		http.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 			http.ServeFile(w, r, "index.html")
 		})
-		http.HandleFunc("GET /items/", serveItems)
+		http.HandleFunc("GET /items.json", serveItems)
 		http.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	}
 

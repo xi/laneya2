@@ -21,3 +21,4 @@ install:
 	install -Dm 644 static/dpad.js "${DESTDIR}/var/www/laneya/static/dpad.js"
 	install -Dm 644 static/style.css "${DESTDIR}/var/www/laneya/static/style.css"
 	install -Dm 644 README.md "${DESTDIR}/usr/share/doc/laneya/README.md"
+	./server --dump-items > "${DESTDIR}/var/www/laneya/items.json"

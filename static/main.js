@@ -18,7 +18,7 @@ var COLORS = {
     'pile': 3,
 };
 
-var ITEMS = await fetch('/items/').then(r => r.json());
+var ITEMS = await fetch('/items.json').then(r => r.json());
 
 var inRect = function(pos, rect, withWalls) {
     if (withWalls) {
