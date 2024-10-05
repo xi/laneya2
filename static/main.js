@@ -61,6 +61,8 @@ var game = {
         lineOfSight: 0,
     },
     inventory: {},
+    weapon: '',
+    armor: '',
 
     getRect(pos, withWalls) {
         for (const rect of this.rects) {
@@ -210,16 +212,16 @@ var screen = {
         }
     },
 
-    table(items, cols) {
+    table(stats, cols) {
         var c = Math.floor(cols / 3);
         var item = ITEMS[this.menuSelected] || {};
-        var rows = items.map(([label, key]) => [
+        var rows = stats.map(([label, key]) => [
             label,
             '' + game.stats[key],
             item[key] ? ((item[key] > 0 ? '+' : '') + item[key]) : '',
             item[key],
         ]);
-        var l1 = Math.max(...rows.map(row => row[0].length));
+        var l1 = Math.max('Weapon'.length, 'Armor'.length, ...rows.map(row => row[0].length));
         var l2 = Math.max(...rows.map(row => row[1].length));
         var l3 = Math.max(...rows.map(row => row[2].length));
 
@@ -239,6 +241,13 @@ var screen = {
                 $pre.append('\n');
             }
         });
+
+        this.commitSpan(('Weapon'.substr(0, l1) + ':').padEnd(l1 + 2), -1);
+        this.commitSpan(game.weapon.padEnd(c - (l1 + 2)), 1);
+
+        this.commitSpan(('Armor'.substr(0, l1) + ':').padEnd(l1 + 2), -1);
+        this.commitSpan(game.armor, 3);
+        $pre.append('\n');
     },
 
     renderHealth() {
@@ -249,7 +258,7 @@ var screen = {
     },
 
     renderMenu() {
-        var rows = this.rows - 4;
+        var rows = this.rows - 5;
         var items = Object.entries(game.inventory);
         items.sort();
 
@@ -373,6 +382,10 @@ socket.onmessage = function(event) {
             } else {
                 delete game.inventory[msg.item];
             }
+        } else if (msg.action === 'setWeapon') {
+            game.weapon = msg.item;
+        } else if (msg.action === 'setArmor') {
+            game.armor = msg.item;
         } else {
             console.log(msg);
         }

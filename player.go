@@ -118,12 +118,20 @@ func (player *Player) RemoveItem(name string) {
 			if item, ok := Items[name]; ok {
 				player.UnapplyItem(item)
 				player.CommitStats()
+				player.Enqueue(Message{
+					"action": "setWeapon",
+					"item":   player.Weapon,
+				})
 			}
 		} else if name == player.Armor {
 			player.Armor = ""
 			if item, ok := Items[name]; ok {
 				player.UnapplyItem(item)
 				player.CommitStats()
+				player.Enqueue(Message{
+					"action": "setArmor",
+					"item":   player.Armor,
+				})
 			}
 		}
 	}
@@ -209,6 +217,10 @@ func (player *Player) UseItem(name string) {
 		} else {
 			player.Weapon = ""
 		}
+		player.Enqueue(Message{
+			"action": "setWeapon",
+			"item":   player.Weapon,
+		})
 	case ARMOR:
 		if old, ok := Items[player.Armor]; ok {
 			player.UnapplyItem(old)
@@ -219,6 +231,10 @@ func (player *Player) UseItem(name string) {
 		} else {
 			player.Armor = ""
 		}
+		player.Enqueue(Message{
+			"action": "setArmor",
+			"item":   player.Armor,
+		})
 	}
 
 	player.CommitStats()
