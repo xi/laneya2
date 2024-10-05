@@ -213,24 +213,26 @@ var screen = {
     table(items, cols) {
         var c = Math.floor(cols / 3);
         var item = ITEMS[this.menuSelected] || {};
-        var rows = items.map(([label, key]) => {
-            return [label, '' + game.stats[key], '' + (item[key] || ''), item[key]];
-        });
+        var rows = items.map(([label, key]) => [
+            label,
+            '' + game.stats[key],
+            item[key] ? ((item[key] > 0 ? '+' : '') + item[key]) : '',
+            item[key],
+        ]);
         var l1 = Math.max(...rows.map(row => row[0].length));
         var l2 = Math.max(...rows.map(row => row[1].length));
         var l3 = Math.max(...rows.map(row => row[2].length));
 
-        if ((l1 + 2) + l2 + (l3 ? l3 + 3 : 0) + 2 > c) {
-            l1 = c - (2 + l2 + (l3 ? l3 + 3 : 0) + 2);
+        if ((l1 + 2) + l2 + (l3 ? l3 + 1 : 0) + 2 > c) {
+            l1 = c - (2 + l2 + (l3 ? l3 + 1 : 0) + 2);
         }
         rows.forEach((row, i) => {
             this.commitSpan((row[0].substr(0, l1) + ':').padEnd(l1 + 2), -1);
             this.commitSpan(row[1].padStart(l2), -1);
             var l = (l1 + 2) + l2;
             if (row[3]) {
-                this.commitSpan(' → ', 7);
-                this.commitSpan(row[2].padStart(l3), row[3] < 0 ? 1 : 2);
-                l += 3 + l3;
+                this.commitSpan(row[2].padStart(l3 + 1), row[3] < 0 ? 1 : 2);
+                l += l3 + 1;
             }
             this.commitSpan(' '.repeat(c - l));
             if ((i + 1) % 3 === 0) {
