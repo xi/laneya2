@@ -82,38 +82,38 @@ func (player *Player) UnapplyItem(item Item) {
 	player.Speed -= item.Speed
 }
 
-func (player *Player) AddItem(item string, amount uint) {
-	value, ok := player.Inventory[item]
+func (player *Player) AddItem(name string, added uint) {
+	amount, ok := player.Inventory[name]
 	if ok {
-		value += amount
+		amount += added
 	} else {
-		value = amount
+		amount = added
 	}
-	player.Inventory[item] = value
+	player.Inventory[name] = amount
 
 	player.Enqueue(Message{
 		"action": "setInventory",
-		"item":   item,
-		"amount": value,
+		"item":   name,
+		"amount": amount,
 	})
 }
 
-func (player *Player) RemoveItem(item string) {
-	value, ok := player.Inventory[item]
+func (player *Player) RemoveItem(name string) {
+	amount, ok := player.Inventory[name]
 	if !ok {
-		value = 0
-	} else if value > 1 {
-		value -= 1
-		player.Inventory[item] = value
+		amount = 0
+	} else if amount > 1 {
+		amount -= 1
+		player.Inventory[name] = amount
 	} else {
-		value = 0
-		delete(player.Inventory, item)
+		amount = 0
+		delete(player.Inventory, name)
 	}
 
 	player.Enqueue(Message{
 		"action": "setInventory",
-		"item":   item,
-		"amount": value,
+		"item":   name,
+		"amount": amount,
 	})
 }
 
@@ -150,10 +150,10 @@ func (player *Player) PickupItems() {
 	}
 }
 
-func (player *Player) DropItem(item string) {
-	if _, ok := player.Inventory[item]; ok {
-		player.RemoveItem(item)
-		player.Game.addToPile(player.Pos, item, 1)
+func (player *Player) DropItem(name string) {
+	if _, ok := player.Inventory[name]; ok {
+		player.RemoveItem(name)
+		player.Game.addToPile(player.Pos, name, 1)
 	}
 }
 
