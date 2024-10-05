@@ -18,7 +18,7 @@ type Game struct {
 	Monsters   map[*Monster]bool
 	Piles      map[Point]*Pile
 	Msg        chan PlayerMessage
-	MMsg       chan MonsterMessage
+	MMsg       chan *Monster
 	register   chan *Player
 	unregister chan *Player
 	lastId     int
@@ -48,7 +48,7 @@ func getGame(id string) *Game {
 			Monsters:   make(map[*Monster]bool),
 			Piles:      make(map[Point]*Pile),
 			Msg:        make(chan PlayerMessage),
-			MMsg:       make(chan MonsterMessage),
+			MMsg:       make(chan *Monster),
 			register:   make(chan *Player),
 			unregister: make(chan *Player),
 			lastId:     0,
@@ -314,13 +314,8 @@ func (game *Game) run() {
 			} else if verbose {
 				log.Println("unknown action", pmsg.Msg)
 			}
-		case mmsg := <-game.MMsg:
-			if mmsg.Msg["action"] == "move" {
-				dir, ok := mmsg.Msg["dir"].(string)
-				if ok {
-					mmsg.Monster.Move(dir)
-				}
-			}
+		case monster := <-game.MMsg:
+			monster.Move()
 		}
 		game.Flush()
 	}
