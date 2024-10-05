@@ -136,14 +136,14 @@ var game = {
             obj => obj.type === 'player' && this.inView(obj.pos, {x, y})
         );
 
-        if (x === this.ladder.x && y === this.ladder.y) {
-            return ['>', inView() ? -1 : 0];
-        }
         var objs = Object.values(this.objects).filter(obj => x === obj.pos.x && y === obj.pos.y);
         for (const obj of objs) {
             if (obj.type === 'player' || inView()) {
                 return [obj.rune, COLORS[obj.type]];
             }
+        }
+        if (x === this.ladder.x && y === this.ladder.y) {
+            return ['>', inView() ? -1 : 0];
         }
         if (this.getRect({x, y})) {
             return ['.', inView() ? -1 : 0];
