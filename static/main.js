@@ -132,7 +132,17 @@ var game = {
 
         var objs = Object.values(this.objects).filter(obj => x === obj.pos.x && y === obj.pos.y);
         for (const obj of objs) {
-            if (obj.type === 'player' || inView()) {
+            if (obj.type === 'player') {
+                return [obj.rune, COLORS[obj.type]];
+            }
+        }
+        if (inView()) {
+            for (const obj of objs) {
+                if (obj.type === 'monster') {
+                    return [obj.rune, COLORS[obj.type]];
+                }
+            }
+            for (const obj of objs) {
                 return [obj.rune, COLORS[obj.type]];
             }
         }
