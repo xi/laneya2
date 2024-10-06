@@ -21,7 +21,7 @@ var upgrader = websocket.Upgrader{}
 
 func (player *Player) readPump() {
 	var timer *time.Timer = nil
-	var lastTime time.Time = time.UnixMicro(0)
+	lastTime := time.UnixMicro(0)
 
 	defer func() {
 		if timer != nil {
