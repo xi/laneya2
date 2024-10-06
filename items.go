@@ -55,18 +55,18 @@ var Items = map[string]Item{
 	// weapons
 	"Butterknive": {
 		Type:   WEAPON,
-		Value:  30,
+		Value:  50,
 		Attack: 1,
 	},
 	"Sword": {
 		Type:   WEAPON,
-		Value:  100,
-		Attack: 3,
+		Value:  150,
+		Attack: 4,
 	},
 	"Battleaxe": Item{
 		Type:   WEAPON,
 		Value:  500,
-		Attack: 4,
+		Attack: 6,
 		Speed:  -5,
 	},
 	"Daggers": Item{
@@ -78,13 +78,13 @@ var Items = map[string]Item{
 	"Sting": Item{
 		Type:        WEAPON,
 		Value:       400,
-		Attack:      2,
+		Attack:      3,
 		LineOfSight: 2,
 	},
 	"Shield": Item{
 		Type:    WEAPON,
 		Value:   300,
-		Defense: 3,
+		Defense: 6,
 	},
 
 	// armor
@@ -92,26 +92,26 @@ var Items = map[string]Item{
 		Type:    ARMOR,
 		Value:   100,
 		Defense: 2,
-		Speed:   -5,
+		Speed:   -1,
 	},
 	"Shining Armor": Item{
 		Type:        ARMOR,
 		Value:       500,
-		Defense:     2,
+		Defense:     3,
 		LineOfSight: 3,
 		Speed:       -5,
 	},
 	"Heavy Armor": Item{
 		Type:    ARMOR,
 		Value:   400,
-		Defense: 3,
+		Defense: 5,
 		Speed:   -10,
 	},
 	"Spiked Armor": Item{
 		Type:    ARMOR,
 		Value:   1000,
-		Attack:  1,
-		Defense: 2,
+		Attack:  2,
+		Defense: 3,
 		Speed:   -10,
 	},
 	"Cloak": Item{
@@ -122,10 +122,9 @@ var Items = map[string]Item{
 		Speed:       5,
 	},
 	"Body Oil": Item{
-		Type:   ARMOR,
-		Value:  750,
-		Attack: 1,
-		Speed:  10,
+		Type:  ARMOR,
+		Value: 750,
+		Speed: 10,
 	},
 }
 
