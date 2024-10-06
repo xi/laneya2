@@ -261,7 +261,7 @@ var screen = {
     renderMenu() {
         var rows = this.rows - 5;
         var items = Object.entries(game.inventory);
-        items.sort();
+        items.sort((a, b) => ITEMS[a[0]].value - ITEMS[b[0]].value);
 
         if (this.menuCursor > items.length - 1) {
             this.menuCursor = items.length - 1;
