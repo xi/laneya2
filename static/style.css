@@ -39,6 +39,7 @@ pre {
 	font-size: 16px;
 	dominant-baseline: middle;
 	text-anchor: middle;
+	fill: var(--bg);
 }
 #dpad {
 	inset-inline-start: 0;
