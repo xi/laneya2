@@ -305,6 +305,9 @@ func (game *Game) run() {
 				mux.Unlock()
 			}
 		case pmsg := <-game.Msg:
+			if _, ok := game.Players[pmsg.Player]; !ok {
+				return
+			}
 			if pmsg.Msg["action"] == "move" {
 				dir, ok := pmsg.Msg["dir"].(string)
 				if ok {
@@ -326,6 +329,9 @@ func (game *Game) run() {
 				log.Println("unknown action", pmsg.Msg)
 			}
 		case monster := <-game.MMsg:
+			if _, ok := game.Monsters[monster]; !ok {
+				return
+			}
 			monster.Move()
 		}
 		game.Flush()
