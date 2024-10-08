@@ -107,7 +107,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 
 	player := &Player{
 		Game:        game,
-		send:        make(chan []Message),
+		send:        make(chan []Message, 5),
 		queue:       []Message{},
 		conn:        conn,
 		alive:       true,
