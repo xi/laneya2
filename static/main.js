@@ -259,11 +259,11 @@ var screen = {
             }
         });
 
-        this.commitSpan(('Weapon'.substr(0, l1) + ':').padEnd(l1 + 2), -1);
-        this.commitSpan(game.weapon.padEnd(c - (l1 + 2)), 1);
-
         this.commitSpan(('Armor'.substr(0, l1) + ':').padEnd(l1 + 2), -1);
-        this.commitSpan(game.armor, 3);
+        this.commitSpan(game.armor.padEnd(c - (l1 + 2)), 3);
+
+        this.commitSpan(('Weapon'.substr(0, l1) + ':').padEnd(l1 + 2), -1);
+        this.commitSpan(game.weapon, 1);
         $pre.append('\n');
     },
 
