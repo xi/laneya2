@@ -2,6 +2,7 @@ package main
 
 import (
 	"math"
+	"math/rand"
 	"time"
 )
 
@@ -28,9 +29,29 @@ func makeMonster(game *Game, pos Point) *Monster {
 		Dir:     "right",
 		Speed:   0,
 		Attack:  2 + float64(game.Level),
-		Defense: 0 + float64(game.Level),
+		Defense: 2,
 		Health:  10 + float64(game.Level),
 	}
+
+	r := rand.Intn(10)
+	if r == 0 {
+		monster.Rune = 'M'
+		monster.Attack += 6
+		monster.Defense += 6
+		monster.Health *= 2
+		monster.Speed -= 2
+	} else if r < 3 {
+		monster.Rune = 's'
+		monster.Speed += 10
+		monster.Health /= 2
+	} else if r < 5 {
+		monster.Rune = 'z'
+		monster.Attack += 2
+		monster.Defense += 2
+		monster.Health *= 1.2
+		monster.Speed -= 5
+	}
+
 	go monster.run()
 	return monster
 }
