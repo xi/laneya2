@@ -163,6 +163,7 @@ func (game *Game) MaybeNextLevel() {
 	game.generateMap()
 	game.Enqueue(Message{
 		"action": "setLevel",
+		"level":  game.Level,
 		"rects":  game.Rects,
 		"ladder": game.Ladder,
 	})
@@ -252,6 +253,7 @@ func (game *Game) run() {
 			})
 			player.Enqueue(Message{
 				"action": "setLevel",
+				"level":  game.Level,
 				"rects":  game.Rects,
 				"ladder": game.Ladder,
 			})

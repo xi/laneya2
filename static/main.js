@@ -57,6 +57,7 @@ var binSearch = function(key) {
 
 var game = {
     id: -1,
+    level: 0,
     rects: [],
     seen: {},
     objects: {},
@@ -267,9 +268,11 @@ var screen = {
     },
 
     renderHealth() {
-        var health = Math.round(game.stats.health / game.stats.healthTotal * this.cols);
+        var cols = this.cols - 4;
+        var health = Math.round(game.stats.health / game.stats.healthTotal * cols);
         this.commitSpan('='.repeat(health), 1);
-        this.commitSpan('='.repeat(this.cols - health), 0);
+        this.commitSpan('='.repeat(cols - health), 0);
+        this.commitSpan(('' + game.level).padStart(4), -1);
         $pre.append('\n');
     },
 
@@ -373,6 +376,7 @@ socket.onmessage = function(event) {
         if (msg.action === 'setId') {
             game.id = msg.id;
         } else if (msg.action === 'setLevel') {
+            game.level = msg.level;
             game.rects = msg.rects;
             game.ladder = msg.ladder;
             game.seen = {};
