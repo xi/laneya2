@@ -11,6 +11,7 @@ type Monster struct {
 	Id      int
 	Rune    rune
 	Pos     Point
+	Dir     string
 	Health  float64
 	Attack  float64
 	Defense float64
@@ -24,6 +25,7 @@ func makeMonster(game *Game, pos Point) *Monster {
 		Id:      game.createId(),
 		Rune:    'm',
 		Pos:     pos,
+		Dir:     "right",
 		Speed:   0,
 		Attack:  2 + float64(game.Level),
 		Defense: 0 + float64(game.Level),
@@ -67,25 +69,30 @@ func (monster *Monster) TakeDamage(attack float64) {
 func (monster *Monster) Move() {
 	game := monster.Game
 
-	bestDist := 100000
-	dir := "left"
-	for player := range game.Players {
-		dist := monster.Pos.Dist(player.Pos)
-		if dist < bestDist {
-			bestDist = dist
-			dir = monster.Pos.Dir(player.Pos)
-		}
-	}
-
-	if bestDist > 10 {
-		return
-	}
-	if !game.IsFree(monster.Pos.Move(dir)) {
-		dir = RandomDir()
-	}
-
-	pos := monster.Pos.Move(dir)
+	pos := monster.Pos.Move(monster.Dir)
 	player := game.getPlayerAt(pos)
+
+	if player == nil {
+		bestDist := 100000
+		monster.Dir = "left"
+		for player := range game.Players {
+			dist := monster.Pos.Dist(player.Pos)
+			if dist < bestDist {
+				bestDist = dist
+				monster.Dir = monster.Pos.Dir(player.Pos)
+			}
+		}
+
+		if bestDist > 10 {
+			return
+		}
+		if !game.IsFree(monster.Pos.Move(monster.Dir)) {
+			monster.Dir = RandomDir()
+		}
+
+		pos = monster.Pos.Move(monster.Dir)
+		player = game.getPlayerAt(pos)
+	}
 
 	if player != nil {
 		player.TakeDamage(monster.Attack)
