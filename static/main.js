@@ -1,9 +1,24 @@
 import onDPad from './dpad.js';
 
+var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 var $pre = document.querySelector('pre');
 
 var params = new URLSearchParams(location.search);
 var gameId = params.get('game');
+
+var randomString = function(length) {
+    var result = [];
+    for (var i = 0; i < length; i++) {
+        var k = Math.floor(Math.random() * chars.length);
+        result.push(chars[k]);
+    }
+    return result.join('');
+};
+
+if (!gameId) {
+    params.set('game', randomString(10));
+    location.search = params;
+}
 
 var ITEMS = await fetch('/items.json').then(r => r.json());
 
