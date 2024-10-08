@@ -86,6 +86,22 @@ var Items = map[string]Item{
 		Value:   300,
 		Defense: 10,
 	},
+	"Masamune": Item{
+		Value:  1000,
+		Attack: 12,
+		Speed:  5,
+	},
+	"Bastard Sword": Item{
+		Type:   WEAPON,
+		Value:  1200,
+		Attack: 15,
+	},
+	"Excalibur": Item{
+		Type:        WEAPON,
+		Value:       1500,
+		Attack:      25,
+		LineOfSight: 1,
+	},
 
 	// armor
 	"Leather Armor": Item{
@@ -120,12 +136,38 @@ var Items = map[string]Item{
 		Value: 650,
 		Speed: 10,
 	},
+	"Wizard's Robe": Item{
+		Type:        ARMOR,
+		Value:       700,
+		Defense:     4,
+		LineOfSight: 1,
+		Speed:       10,
+	},
+	"Forged Armor": Item{
+		Type:        ARMOR,
+		Value:       1000,
+		Defense:     15,
+		Speed:       -10,
+		LineOfSight: -1,
+	},
 	"Spiked Armor": Item{
 		Type:    ARMOR,
 		Value:   1200,
 		Attack:  4,
 		Defense: 6,
 		Speed:   -10,
+	},
+	"Obsidian Armor": Item{
+		Type:    ARMOR,
+		Value:   1500,
+		Defense: 15,
+	},
+	"Dragon Scale Armor": Item{
+		Type:        ARMOR,
+		Value:       2000,
+		Defense:     20,
+		Speed:       -2,
+		HealthTotal: 10,
 	},
 }
 
