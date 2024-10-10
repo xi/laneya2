@@ -87,6 +87,7 @@ var Items = map[string]Item{
 		Defense: 10,
 	},
 	"Masamune": Item{
+		Type:   WEAPON,
 		Value:  1000,
 		Attack: 12,
 		Speed:  5,
