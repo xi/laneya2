@@ -6,6 +6,18 @@ import (
 	"time"
 )
 
+type MonsterClass struct {
+	Rune          rune
+	HealthBase    float64
+	HealthFactor  float64
+	AttackBase    float64
+	AttackFactor  float64
+	DefenseBase   float64
+	DefenseFactor float64
+	Speed         int
+	Probability   float64
+}
+
 type Monster struct {
 	Game    *Game
 	quit    chan bool
@@ -19,37 +31,81 @@ type Monster struct {
 	Speed   int
 }
 
+var MonsterClasses = []MonsterClass{
+	MonsterClass{
+		Rune:         'm',
+		HealthBase:   10,
+		HealthFactor: 1,
+		AttackBase:   2,
+		AttackFactor: 1,
+		DefenseBase:  2,
+		Probability:  5,
+	},
+	MonsterClass{
+		Rune:         'M',
+		HealthBase:   20,
+		HealthFactor: 2,
+		AttackBase:   8,
+		AttackFactor: 1,
+		DefenseBase:  8,
+		Speed:        -2,
+		Probability:  1,
+	},
+	MonsterClass{
+		Rune:         's',
+		HealthBase:   5,
+		HealthFactor: 0.5,
+		AttackBase:   2,
+		AttackFactor: 1,
+		DefenseBase:  2,
+		Speed:        10,
+		Probability:  2,
+	},
+	MonsterClass{
+		Rune:         'z',
+		HealthBase:   12,
+		HealthFactor: 1.2,
+		AttackBase:   4,
+		AttackFactor: 1,
+		DefenseBase:  4,
+		Speed:        -5,
+		Probability:  2,
+	},
+}
+
+func randomMonsterClass() *MonsterClass {
+	total := 0.0
+	for _, c := range MonsterClasses {
+		total += c.Probability
+	}
+
+	x := rand.Float64()
+	for _, c := range MonsterClasses {
+		p := c.Probability / total
+		if x < p {
+			return &c
+		} else {
+			x -= p
+		}
+	}
+	return &MonsterClasses[0]
+}
+
 func makeMonster(game *Game, pos Point) *Monster {
+	f := float64(game.Level)
+	c := randomMonsterClass()
+
 	monster := &Monster{
 		Game:    game,
 		quit:    make(chan bool),
 		Id:      game.createId(),
-		Rune:    'm',
+		Rune:    c.Rune,
 		Pos:     pos,
 		Dir:     "right",
-		Speed:   0,
-		Attack:  2 + float64(game.Level),
-		Defense: 2,
-		Health:  10 + float64(game.Level),
-	}
-
-	r := rand.Intn(10)
-	if r == 0 {
-		monster.Rune = 'M'
-		monster.Attack += 6
-		monster.Defense += 6
-		monster.Health *= 2
-		monster.Speed -= 2
-	} else if r < 3 {
-		monster.Rune = 's'
-		monster.Speed += 10
-		monster.Health /= 2
-	} else if r < 5 {
-		monster.Rune = 'z'
-		monster.Attack += 2
-		monster.Defense += 2
-		monster.Health *= 1.2
-		monster.Speed -= 5
+		Health:  c.HealthBase + c.HealthFactor*f,
+		Attack:  c.AttackBase + c.AttackFactor*f,
+		Defense: c.DefenseBase + c.DefenseFactor*f,
+		Speed:   c.Speed,
 	}
 
 	go monster.run()
