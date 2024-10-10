@@ -163,7 +163,6 @@ func main() {
 	dumpItems := false
 
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "laneya [-v] [-s] [port]\n")
 		fmt.Fprintf(os.Stderr, "laneya [-v] [-s] [--dump-items] [port]\n")
 		flag.PrintDefaults()
 	}
