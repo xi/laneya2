@@ -48,4 +48,7 @@ export default function(el, handler) {
 
     el.addEventListener('pointerup', pointerup);
     el.addEventListener('pointercancel', pointerup);
+
+    // prevent zoom-on-double-tap in iOS
+    el.addEventListener('click', e => e.preventDefault())
 }
