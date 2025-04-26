@@ -305,6 +305,7 @@ func (game *Game) run() {
 				mux.Lock()
 				delete(games, game.Id)
 				mux.Unlock()
+				return
 			}
 		case pmsg := <-game.Msg:
 			if _, ok := game.Players[pmsg.Player]; !ok {
