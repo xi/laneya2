@@ -308,7 +308,7 @@ func (game *Game) run() {
 			}
 		case pmsg := <-game.Msg:
 			if _, ok := game.Players[pmsg.Player]; !ok {
-				return
+				continue
 			}
 			if pmsg.Msg["action"] == "move" {
 				dir, ok := pmsg.Msg["dir"].(string)
@@ -332,7 +332,7 @@ func (game *Game) run() {
 			}
 		case monster := <-game.MMsg:
 			if _, ok := game.Monsters[monster]; !ok {
-				return
+				continue
 			}
 			monster.Move()
 		}
