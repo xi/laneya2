@@ -136,18 +136,31 @@ func serveItems(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(Items)
 }
 
-func serve(addr string) {
+func getListener(port int) (net.Listener, error) {
+	if os.Getenv("LISTEN_PID") == strconv.Itoa(os.Getpid()) {
+		f := os.NewFile(uintptr(3), "systemd-socket")
+		return net.FileListener(f)
+	} else {
+		addr := fmt.Sprintf("localhost:%d", port)
+		return net.Listen("tcp", addr)
+	}
+}
+
+func serve(port int) {
 	http.HandleFunc("GET /ws/{id}", serveWs)
 
 	ctx, unregisterSignals := signal.NotifyContext(
 		context.Background(), os.Interrupt, syscall.SIGTERM,
 	)
 	ctxFactory := func(l net.Listener) context.Context { return ctx }
-	server := &http.Server{Addr: addr, BaseContext: ctxFactory}
+	server := &http.Server{BaseContext: ctxFactory}
 
 	go func() {
-		log.Printf("Serving on http://%s", addr)
-		err := server.ListenAndServe()
+		listener, err := getListener(port)
+		if err == nil {
+			log.Printf("Serving on %s", listener.Addr())
+			err = server.Serve(listener)
+		}
 		if err != nil && err != http.ErrServerClosed {
 			log.Fatal(err)
 		}
@@ -179,8 +192,6 @@ func main() {
 		return
 	}
 
-	addr = fmt.Sprintf("localhost:%d", port)
-
 	if static {
 		http.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 			http.ServeFile(w, r, "index.html")
@@ -189,5 +200,5 @@ func main() {
 		http.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	}
 
-	serve(addr)
+	serve(port)
 }
